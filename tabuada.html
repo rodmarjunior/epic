@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tabuada Battle</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --p1-color: #00e5ff;
+    --p1-dark: #0077aa;
+    --p1-glow: rgba(0,229,255,0.4);
+    --p2-color: #ff4d6d;
+    --p2-dark: #aa0033;
+    --p2-glow: rgba(255,77,109,0.4);
+    --bg: #050a15;
+    --mid: #0d1b2e;
+    --text: #e8f4f8;
+    --gold: #ffd700;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Rajdhani', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ===== SETUP SCREEN ===== */
+  #setup-screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    background: var(--bg);
+    gap: 40px;
+  }
+
+  .logo {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    line-height: 1;
+    text-align: center;
+  }
+  .logo span:nth-child(1) { color: var(--p1-color); text-shadow: 0 0 30px var(--p1-glow); }
+  .logo span:nth-child(2) { color: var(--text); }
+  .logo span:nth-child(3) { color: var(--p2-color); text-shadow: 0 0 30px var(--p2-glow); }
+
+  .subtitle {
+    font-size: 1.4rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    font-weight: 600;
+  }
+
+  .setup-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 40px 50px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    max-width: 600px;
+    width: 90%;
+  }
+
+  .setup-card h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 24px;
+  }
+
+  .table-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 10px;
+    margin-bottom: 36px;
+  }
+
+  .table-btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.15);
+    color: var(--text);
+    padding: 14px 0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .table-btn:hover {
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+  }
+
+  .table-btn.selected {
+    background: linear-gradient(135deg, rgba(0,229,255,0.2), rgba(255,77,109,0.2));
+    border-color: var(--gold);
+    color: var(--gold);
+    box-shadow: 0 0 20px rgba(255,215,0,0.3);
+    transform: scale(1.08);
+  }
+
+  .start-btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--p1-color), var(--p2-color));
+    border: none;
+    color: #000;
+    padding: 18px 60px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    opacity: 0.4;
+    pointer-events: none;
+    box-shadow: 0 4px 30px rgba(0,229,255,0.2);
+  }
+
+  .start-btn.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .start-btn.active:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 40px rgba(0,229,255,0.4);
+  }
+
+  /* ===== GAME SCREEN ===== */
+  #game-screen {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+  }
+
+  /* Player panels */
+  .player-panel {
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 30px 24px 24px;
+    gap: 16px;
+  }
+
+  #p1-panel {
+    left: 0;
+    background: linear-gradient(160deg, rgba(0,229,255,0.07) 0%, transparent 60%);
+    border-right: 1px solid rgba(255,255,255,0.08);
+  }
+
+  #p2-panel {
+    right: 0;
+    background: linear-gradient(200deg, rgba(255,77,109,0.07) 0%, transparent 60%);
+  }
+
+  /* Center divider */
+  .divider {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom,
+      transparent 0%,
+      var(--p1-color) 20%,
+      rgba(255,255,255,0.6) 50%,
+      var(--p2-color) 80%,
+      transparent 100%
+    );
+    z-index: 10;
+    box-shadow: 0 0 20px rgba(255,255,255,0.2);
+  }
+
+  .vs-badge {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    font-family: 'Orbitron', monospace;
+    font-size: 1.4rem;
+    font-weight: 900;
+    background: var(--bg);
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.5);
+    box-shadow: 0 0 30px rgba(0,0,0,0.8);
+  }
+
+  /* Player header */
+  .player-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .player-name {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1.2rem, 3vw, 2rem);
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  #p1-panel .player-name { color: var(--p1-color); text-shadow: 0 0 20px var(--p1-glow); }
+  #p2-panel .player-name { color: var(--p2-color); text-shadow: 0 0 20px var(--p2-glow); }
+
+  /* Progress dots */
+  .progress-dots {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+    background: transparent;
+    transition: all 0.4s;
+  }
+
+  #p1-panel .dot.filled {
+    background: var(--p1-color);
+    border-color: var(--p1-color);
+    box-shadow: 0 0 10px var(--p1-glow);
+  }
+
+  #p2-panel .dot.filled {
+    background: var(--p2-color);
+    border-color: var(--p2-color);
+    box-shadow: 0 0 10px var(--p2-glow);
+  }
+
+  /* Question area */
+  .question-area {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+  }
+
+  .question-card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 24px;
+    padding: 28px 36px;
+    text-align: center;
+    width: 100%;
+    max-width: 380px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  #p1-panel .question-card { border-color: rgba(0,229,255,0.2); }
+  #p2-panel .question-card { border-color: rgba(255,77,109,0.2); }
+
+  .question-text {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+
+  #p1-panel .question-text { color: var(--p1-color); }
+  #p2-panel .question-text { color: var(--p2-color); }
+
+  .question-label {
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+  }
+
+  /* Answer options */
+  .answers-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    max-width: 380px;
+  }
+
+  .answer-btn {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+    font-weight: 700;
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.12);
+    color: var(--text);
+    padding: 18px 10px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    touch-action: manipulation;
+  }
+
+  #p1-panel .answer-btn:hover, #p1-panel .answer-btn:active {
+    background: rgba(0,229,255,0.15);
+    border-color: var(--p1-color);
+    color: var(--p1-color);
+    transform: scale(1.04);
+    box-shadow: 0 0 20px var(--p1-glow);
+  }
+
+  #p2-panel .answer-btn:hover, #p2-panel .answer-btn:active {
+    background: rgba(255,77,109,0.15);
+    border-color: var(--p2-color);
+    color: var(--p2-color);
+    transform: scale(1.04);
+    box-shadow: 0 0 20px var(--p2-glow);
+  }
+
+  .answer-btn.correct {
+    background: rgba(0,255,100,0.2) !important;
+    border-color: #00ff64 !important;
+    color: #00ff64 !important;
+    box-shadow: 0 0 25px rgba(0,255,100,0.4) !important;
+  }
+
+  .answer-btn.wrong {
+    background: rgba(255,50,50,0.2) !important;
+    border-color: #ff3232 !important;
+    color: #ff3232 !important;
+    animation: shake 0.3s ease;
+  }
+
+  .answer-btn:disabled { pointer-events: none; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  /* Score / timer */
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 380px;
+    justify-content: center;
+  }
+
+  .score-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 1rem;
+    letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+  }
+
+  .score-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 2.2rem;
+    font-weight: 900;
+  }
+
+  #p1-panel .score-value { color: var(--p1-color); }
+  #p2-panel .score-value { color: var(--p2-color); }
+
+  /* Status messages */
+  .status-msg {
+    font-family: 'Orbitron', monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-align: center;
+    min-height: 26px;
+    transition: all 0.3s;
+  }
+
+  #p1-panel .status-msg { color: var(--p1-color); }
+  #p2-panel .status-msg { color: var(--p2-color); }
+
+  /* Finished overlay per panel */
+  .panel-finished {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(5,10,21,0.85);
+    border-radius: 0;
+    z-index: 5;
+    flex-direction: column;
+    gap: 12px;
+    backdrop-filter: blur(4px);
+  }
+
+  .panel-finished.show { display: flex; }
+
+  .finished-icon {
+    font-size: 5rem;
+    animation: bounceIn 0.5s ease;
+  }
+
+  .finished-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+  }
+
+  .finished-time {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.15em;
+  }
+
+  @keyframes bounceIn {
+    0% { transform: scale(0); opacity: 0; }
+    60% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* ===== RESULT SCREEN ===== */
+  #result-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: var(--bg);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 36px;
+  }
+
+  .winner-banner {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1rem, 3vw, 1.6rem);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+  }
+
+  .winner-name {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(3rem, 10vw, 8rem);
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    line-height: 1;
+    animation: pulseWin 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulseWin {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+  }
+
+  .winner-p1 { color: var(--p1-color); text-shadow: 0 0 60px var(--p1-glow), 0 0 120px var(--p1-glow); }
+  .winner-p2 { color: var(--p2-color); text-shadow: 0 0 60px var(--p2-glow), 0 0 120px var(--p2-glow); }
+  .winner-tie { color: var(--gold); text-shadow: 0 0 60px rgba(255,215,0,0.5); }
+
+  .result-details {
+    display: flex;
+    gap: 60px;
+    align-items: center;
+  }
+
+  .result-card {
+    text-align: center;
+    padding: 24px 40px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+  }
+
+  .result-card .r-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.9rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .result-card .r-score {
+    font-family: 'Orbitron', monospace;
+    font-size: 3rem;
+    font-weight: 900;
+  }
+
+  .result-card .r-time {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.4);
+    margin-top: 4px;
+    letter-spacing: 0.1em;
+  }
+
+  .result-card-p1 .r-name, .result-card-p1 .r-score { color: var(--p1-color); }
+  .result-card-p2 .r-name, .result-card-p2 .r-score { color: var(--p2-color); }
+
+  .result-vs {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.2);
+  }
+
+  .play-again-btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: transparent;
+    border: 2px solid rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.6);
+    padding: 16px 50px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .play-again-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    box-shadow: 0 0 30px rgba(255,215,0,0.3);
+  }
+
+  /* Confetti particles */
+  .confetti-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 199;
+  }
+
+  .confetti-piece {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    top: -20px;
+    animation: confettiFall linear forwards;
+    border-radius: 2px;
+  }
+
+  @keyframes confettiFall {
+    to {
+      transform: translateY(110vh) rotate(720deg);
+      opacity: 0;
+    }
+  }
+
+  /* Tabuada badge */
+  .table-badge {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
+    background: rgba(5,10,21,0.9);
+    border: 1px solid rgba(255,215,0,0.4);
+    border-radius: 50px;
+    padding: 8px 24px;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <div class="logo">
+    <span>TABUADA</span><span> </span><span>BATTLE</span>
+  </div>
+  <p class="subtitle">Competição de Tabuada</p>
+
+  <div class="setup-card">
+    <h2>Professor: escolha a tabuada</h2>
+    <div class="table-grid">
+      <button class="table-btn" onclick="selectTable(2)">2</button>
+      <button class="table-btn" onclick="selectTable(3)">3</button>
+      <button class="table-btn" onclick="selectTable(4)">4</button>
+      <button class="table-btn" onclick="selectTable(5)">5</button>
+      <button class="table-btn" onclick="selectTable(6)">6</button>
+      <button class="table-btn" onclick="selectTable(7)">7</button>
+      <button class="table-btn" onclick="selectTable(8)">8</button>
+      <button class="table-btn" onclick="selectTable(9)">9</button>
+      <button class="table-btn" onclick="selectTable(10)">10</button>
+    </div>
+    <button class="start-btn" id="start-btn" onclick="startGame()">⚡ Iniciar Batalha</button>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-screen">
+  <div class="table-badge" id="table-badge">Tabuada do ?</div>
+  <div class="divider"></div>
+  <div class="vs-badge">VS</div>
+
+  <!-- Player 1 -->
+  <div class="player-panel" id="p1-panel">
+    <div class="panel-finished" id="p1-finished">
+      <div class="finished-icon">🏆</div>
+      <div class="finished-text" style="color:var(--p1-color)">COMPLETO!</div>
+      <div class="finished-time" id="p1-finish-time"></div>
+    </div>
+
+    <div class="player-header">
+      <div class="player-name">Jogador 1</div>
+      <div class="progress-dots" id="p1-dots"></div>
+    </div>
+
+    <div class="question-area">
+      <div class="question-card">
+        <div class="question-label">Calcule:</div>
+        <div class="question-text" id="p1-question">?</div>
+      </div>
+
+      <div class="answers-grid" id="p1-answers"></div>
+
+      <div class="status-msg" id="p1-status"></div>
+
+      <div class="score-row">
+        <div class="score-label">Pontos</div>
+        <div class="score-value" id="p1-score">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Player 2 -->
+  <div class="player-panel" id="p2-panel">
+    <div class="panel-finished" id="p2-finished">
+      <div class="finished-icon">🏆</div>
+      <div class="finished-text" style="color:var(--p2-color)">COMPLETO!</div>
+      <div class="finished-time" id="p2-finish-time"></div>
+    </div>
+
+    <div class="player-header">
+      <div class="player-name">Jogador 2</div>
+      <div class="progress-dots" id="p2-dots"></div>
+    </div>
+
+    <div class="question-area">
+      <div class="question-card">
+        <div class="question-label">Calcule:</div>
+        <div class="question-text" id="p2-question">?</div>
+      </div>
+
+      <div class="answers-grid" id="p2-answers"></div>
+
+      <div class="status-msg" id="p2-status"></div>
+
+      <div class="score-row">
+        <div class="score-label">Pontos</div>
+        <div class="score-value" id="p2-score">0</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div id="result-screen">
+  <div class="confetti-container" id="confetti-container"></div>
+  <div class="winner-banner">🎉 Vencedor da rodada 🎉</div>
+  <div class="winner-name" id="winner-name">?</div>
+  <div class="result-details">
+    <div class="result-card result-card-p1">
+      <div class="r-name">Jogador 1</div>
+      <div class="r-score" id="res-p1-score">0</div>
+      <div class="r-time" id="res-p1-time"></div>
+    </div>
+    <div class="result-vs">VS</div>
+    <div class="result-card result-card-p2">
+      <div class="r-name">Jogador 2</div>
+      <div class="r-score" id="res-p2-score">0</div>
+      <div class="r-time" id="res-p2-time"></div>
+    </div>
+  </div>
+  <button class="play-again-btn" onclick="backToSetup()">↩ Nova Rodada</button>
+</div>
+
+<script>
+const QUESTIONS_PER_ROUND = 5;
+let selectedTable = null;
+let gameStartTime = null;
+
+const state = {
+  p1: { score: 0, qIndex: 0, questions: [], finished: false, finishTime: null },
+  p2: { score: 0, qIndex: 0, questions: [], finished: false, finishTime: null }
+};
+
+function selectTable(n) {
+  selectedTable = n;
+  document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('selected'));
+  event.target.classList.add('selected');
+  document.getElementById('start-btn').classList.add('active');
+}
+
+function generateQuestions(table) {
+  // Generate all possible multipliers 1-10, shuffle, take 5
+  const all = Array.from({length: 10}, (_, i) => i + 1);
+  // Shuffle
+  for (let i = all.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [all[i], all[j]] = [all[j], all[i]];
+  }
+  return all.slice(0, QUESTIONS_PER_ROUND).map(multiplier => {
+    const answer = table * multiplier;
+    const wrongs = generateWrongs(answer, table);
+    const options = shuffle([answer, ...wrongs]);
+    return { question: `${table} × ${multiplier}`, answer, options };
+  });
+}
+
+function generateWrongs(answer, table) {
+  const wrongs = new Set();
+  while (wrongs.size < 3) {
+    // Generate plausible wrong answers near the correct one
+    const delta = (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? 1 : -1);
+    const candidate = answer + delta * (Math.floor(Math.random() * 2) + 1);
+    if (candidate !== answer && candidate > 0) wrongs.add(candidate);
+  }
+  return [...wrongs];
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function renderDots(player) {
+  const pState = state[player];
+  const dotsEl = document.getElementById(`${player}-dots`);
+  dotsEl.innerHTML = '';
+  for (let i = 0; i < QUESTIONS_PER_ROUND; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i < pState.qIndex ? ' filled' : '');
+    dotsEl.appendChild(dot);
+  }
+}
+
+function renderQuestion(player) {
+  const pState = state[player];
+  if (pState.qIndex >= QUESTIONS_PER_ROUND) return;
+
+  const q = pState.questions[pState.qIndex];
+  document.getElementById(`${player}-question`).textContent = q.question + ' = ?';
+
+  const answersEl = document.getElementById(`${player}-answers`);
+  answersEl.innerHTML = '';
+  q.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.textContent = opt;
+    btn.onclick = () => handleAnswer(player, opt, btn, answersEl);
+    answersEl.appendChild(btn);
+  });
+
+  document.getElementById(`${player}-status`).textContent = '';
+  renderDots(player);
+}
+
+function handleAnswer(player, chosen, btn, answersEl) {
+  const pState = state[player];
+  const q = pState.questions[pState.qIndex];
+
+  // Disable all buttons
+  answersEl.querySelectorAll('.answer-btn').forEach(b => b.disabled = true);
+
+  if (chosen === q.answer) {
+    btn.classList.add('correct');
+    pState.score++;
+    document.getElementById(`${player}-score`).textContent = pState.score;
+    document.getElementById(`${player}-status`).textContent = '✓ Correto!';
+    pState.qIndex++;
+    renderDots(player);
+
+    setTimeout(() => {
+      if (pState.qIndex >= QUESTIONS_PER_ROUND) {
+        playerFinished(player);
+      } else {
+        renderQuestion(player);
+      }
+    }, 700);
+  } else {
+    btn.classList.add('wrong');
+    // Highlight correct
+    answersEl.querySelectorAll('.answer-btn').forEach(b => {
+      if (parseInt(b.textContent) === q.answer) b.classList.add('correct');
+    });
+    document.getElementById(`${player}-status`).textContent = '✗ Errado! Tente a próxima.';
+    pState.qIndex++;
+    renderDots(player);
+
+    setTimeout(() => {
+      if (pState.qIndex >= QUESTIONS_PER_ROUND) {
+        playerFinished(player);
+      } else {
+        renderQuestion(player);
+      }
+    }, 1000);
+  }
+}
+
+function playerFinished(player) {
+  const pState = state[player];
+  pState.finished = true;
+  pState.finishTime = ((Date.now() - gameStartTime) / 1000).toFixed(1);
+
+  const finishedEl = document.getElementById(`${player}-finished`);
+  finishedEl.classList.add('show');
+  document.getElementById(`${player}-finish-time`).textContent = `Tempo: ${pState.finishTime}s`;
+
+  // Check if both finished
+  if (state.p1.finished && state.p2.finished) {
+    setTimeout(showResults, 800);
+  }
+}
+
+function showResults() {
+  document.getElementById('game-screen').style.display = 'none';
+
+  const p1 = state.p1;
+  const p2 = state.p2;
+
+  document.getElementById('res-p1-score').textContent = p1.score;
+  document.getElementById('res-p1-time').textContent = `${p1.finishTime}s`;
+  document.getElementById('res-p2-score').textContent = p2.score;
+  document.getElementById('res-p2-time').textContent = `${p2.finishTime}s`;
+
+  const winnerEl = document.getElementById('winner-name');
+
+  let winnerText, winnerClass;
+  if (p1.score > p2.score) {
+    winnerText = 'JOGADOR 1';
+    winnerClass = 'winner-p1';
+  } else if (p2.score > p1.score) {
+    winnerText = 'JOGADOR 2';
+    winnerClass = 'winner-p2';
+  } else {
+    // Tie — faster wins
+    if (parseFloat(p1.finishTime) < parseFloat(p2.finishTime)) {
+      winnerText = 'JOGADOR 1';
+      winnerClass = 'winner-p1';
+    } else if (parseFloat(p2.finishTime) < parseFloat(p1.finishTime)) {
+      winnerText = 'JOGADOR 2';
+      winnerClass = 'winner-p2';
+    } else {
+      winnerText = 'EMPATE!';
+      winnerClass = 'winner-tie';
+    }
+  }
+
+  winnerEl.textContent = winnerText;
+  winnerEl.className = 'winner-name ' + winnerClass;
+
+  document.getElementById('result-screen').style.display = 'flex';
+  launchConfetti();
+}
+
+function launchConfetti() {
+  const colors = ['#00e5ff','#ff4d6d','#ffd700','#00ff64','#ff9500','#b066ff'];
+  const container = document.getElementById('confetti-container');
+  container.innerHTML = '';
+  for (let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDuration = (2 + Math.random() * 3) + 's';
+    piece.style.animationDelay = (Math.random() * 1.5) + 's';
+    piece.style.width = (6 + Math.random() * 10) + 'px';
+    piece.style.height = (6 + Math.random() * 10) + 'px';
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    container.appendChild(piece);
+  }
+}
+
+function startGame() {
+  if (!selectedTable) return;
+
+  // Reset state
+  state.p1 = { score: 0, qIndex: 0, questions: generateQuestions(selectedTable), finished: false, finishTime: null };
+  state.p2 = { score: 0, qIndex: 0, questions: generateQuestions(selectedTable), finished: false, finishTime: null };
+
+  document.getElementById('p1-score').textContent = '0';
+  document.getElementById('p2-score').textContent = '0';
+  document.getElementById('p1-finished').classList.remove('show');
+  document.getElementById('p2-finished').classList.remove('show');
+  document.getElementById('table-badge').textContent = `Tabuada do ${selectedTable}`;
+
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'block';
+
+  gameStartTime = Date.now();
+  renderQuestion('p1');
+  renderQuestion('p2');
+}
+
+function backToSetup() {
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('setup-screen').style.display = 'flex';
+}
+</script>
+</body>
+</html>
