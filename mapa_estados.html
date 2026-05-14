@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estados do Brasil</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;user-select:none;}
+body{font-family:'Nunito',sans-serif;background:linear-gradient(135deg,#16A34A,#15803D,#166534);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:1vh;}
+.container{position:relative;z-index:10;width:96vw;max-width:1100px;display:flex;flex-direction:column;align-items:center;gap:1.5vh;}
+.header{display:flex;align-items:center;justify-content:space-between;width:100%;background:rgba(255,255,255,.2);border-radius:20px;padding:.8vh 2vw;border:2px solid rgba(255,255,255,.3);backdrop-filter:blur(10px);}
+.titulo{font-size:clamp(1.3rem,3vw,1.9rem);color:#fff;font-weight:900;}
+.score-box{display:flex;gap:1vw;}
+.score-item{background:rgba(255,255,255,.2);border-radius:12px;padding:.3vh 1vw;text-align:center;min-width:70px;}
+.score-label{font-size:.65rem;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:.08em;}
+.score-num{font-size:clamp(1.2rem,2.5vw,1.7rem);font-weight:900;color:#fff;line-height:1;}
+.pergunta-box{background:rgba(255,255,255,.95);border-radius:22px;padding:1.2vh 3vw;width:100%;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.15);}
+.perg-label{font-size:.85rem;color:#888;text-transform:uppercase;letter-spacing:.15em;}
+.perg-estado{font-size:clamp(2rem,6vw,4rem);font-weight:900;color:#16A34A;}
+.perg-regiao{font-size:clamp(.85rem,2vw,1.1rem);color:#888;margin-top:.2vh;}
+/* Grid de estados */
+.estados-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1vw;width:100%;}
+.btn-estado{
+  background:rgba(255,255,255,.15);border:2.5px solid rgba(255,255,255,.3);
+  border-radius:16px;padding:1.2vh .8vw;
+  font-family:'Nunito',sans-serif;cursor:pointer;
+  text-align:center;transition:transform .15s,background .15s;
+  backdrop-filter:blur(5px);
+}
+.btn-estado:hover{transform:scale(1.05);background:rgba(255,255,255,.28);}
+.btn-estado:active{transform:scale(.96);}
+.estado-sigla{font-size:clamp(1.1rem,2.5vw,1.8rem);font-weight:900;color:#fff;display:block;}
+.estado-nome{font-size:clamp(.55rem,1.3vw,.8rem);color:rgba(255,255,255,.75);display:block;margin-top:.1vh;}
+.btn-estado.acerto{background:rgba(74,222,128,.4)!important;border-color:#4ADE80!important;animation:pulsaAcerto .5s ease;}
+.btn-estado.erro{background:rgba(248,113,113,.35)!important;border-color:#F87171!important;animation:shake .35s ease;}
+@keyframes pulsaAcerto{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+#feedback-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;pointer-events:none;display:flex;align-items:center;justify-content:center;}
+.feedback-msg{font-family:'Nunito',sans-serif;font-size:clamp(4rem,14vw,10rem);font-weight:900;animation:feedAnim .8s ease forwards;opacity:0;}
+@keyframes feedAnim{0%{transform:scale(.3);opacity:1}60%{transform:scale(1.2);opacity:1}100%{transform:scale(1.5);opacity:0}}
+.particula{position:fixed;border-radius:50%;pointer-events:none;z-index:99;animation:explode .7s ease forwards;}
+@keyframes explode{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}}
+#tela-fim{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#16A34A,#166534);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;gap:2vh;}
+#tela-fim.ativa{display:flex;}
+.fim-emoji{font-size:clamp(4rem,12vw,8rem);animation:troFeu .8s cubic-bezier(.175,.885,.32,1.275);}
+@keyframes troFeu{from{transform:scale(0) rotate(-180deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+.fim-titulo{font-size:clamp(2rem,6vw,4rem);font-weight:900;color:#fff;text-align:center;}
+.fim-placar{display:flex;gap:2vw;align-items:center;}
+.fim-card{background:rgba(255,255,255,.2);border-radius:20px;padding:1.5vh 3vw;text-align:center;min-width:110px;}
+.fim-card .num{font-size:clamp(2.5rem,7vw,4.5rem);font-weight:900;color:#fff;line-height:1;}
+.fim-card .lbl{font-size:.8rem;color:rgba(255,255,255,.7);text-transform:uppercase;}
+.btn-reiniciar{background:#fff;border:none;border-radius:18px;padding:1.2vh 4vw;font-family:'Nunito',sans-serif;font-size:clamp(1.2rem,3vw,1.6rem);font-weight:900;color:#16A34A;cursor:pointer;transition:transform .2s;margin-top:1vh;}
+.btn-reiniciar:hover{transform:scale(1.08);}
+</style>
+</head>
+<body>
+<div id="feedback-overlay"></div>
+<div class="container">
+  <div class="header">
+    <div class="titulo">🗺️ Estados do Brasil</div>
+    <div class="score-box">
+      <div class="score-item"><span class="score-label">Rodada</span><span class="score-num" id="num-rodada">1/10</span></div>
+      <div class="score-item"><span class="score-label">Acertos</span><span class="score-num" id="num-acertos" style="color:#86EFAC">0</span></div>
+      <div class="score-item"><span class="score-label">Erros</span><span class="score-num" id="num-erros" style="color:#FCA5A5">0</span></div>
+    </div>
+  </div>
+  <div class="pergunta-box">
+    <div class="perg-label">🎯 Toque no estado correto!</div>
+    <div class="perg-estado" id="perg-estado">—</div>
+    <div class="perg-regiao" id="perg-regiao">Região —</div>
+  </div>
+  <div class="estados-grid" id="estados-grid"></div>
+</div>
+<div id="tela-fim">
+  <div class="fim-emoji">🏆</div>
+  <div class="fim-titulo">Você conhece o Brasil!</div>
+  <div class="fim-placar">
+    <div class="fim-card"><div class="num" id="fim-acertos">0</div><div class="lbl">Acertos</div></div>
+    <div style="font-size:2rem;color:rgba(255,255,255,.3)">✦</div>
+    <div class="fim-card"><div class="num" id="fim-erros">0</div><div class="lbl">Erros</div></div>
+  </div>
+  <button class="btn-reiniciar" onclick="reiniciar()">🔄 Jogar de novo!</button>
+</div>
+<script>
+const ESTADOS=[
+  {sigla:"AC",nome:"Acre",regiao:"Norte"},
+  {sigla:"AL",nome:"Alagoas",regiao:"Nordeste"},
+  {sigla:"AM",nome:"Amazonas",regiao:"Norte"},
+  {sigla:"BA",nome:"Bahia",regiao:"Nordeste"},
+  {sigla:"CE",nome:"Ceará",regiao:"Nordeste"},
+  {sigla:"DF",nome:"Distrito Federal",regiao:"Centro-Oeste"},
+  {sigla:"ES",nome:"Espírito Santo",regiao:"Sudeste"},
+  {sigla:"GO",nome:"Goiás",regiao:"Centro-Oeste"},
+  {sigla:"MA",nome:"Maranhão",regiao:"Nordeste"},
+  {sigla:"MG",nome:"Minas Gerais",regiao:"Sudeste"},
+  {sigla:"MS",nome:"Mato Grosso do Sul",regiao:"Centro-Oeste"},
+  {sigla:"MT",nome:"Mato Grosso",regiao:"Centro-Oeste"},
+  {sigla:"PA",nome:"Pará",regiao:"Norte"},
+  {sigla:"PB",nome:"Paraíba",regiao:"Nordeste"},
+  {sigla:"PE",nome:"Pernambuco",regiao:"Nordeste"},
+  {sigla:"PI",nome:"Piauí",regiao:"Nordeste"},
+  {sigla:"PR",nome:"Paraná",regiao:"Sul"},
+  {sigla:"RJ",nome:"Rio de Janeiro",regiao:"Sudeste"},
+  {sigla:"RN",nome:"Rio Grande do Norte",regiao:"Nordeste"},
+  {sigla:"RO",nome:"Rondônia",regiao:"Norte"},
+  {sigla:"RR",nome:"Roraima",regiao:"Norte"},
+  {sigla:"RS",nome:"Rio Grande do Sul",regiao:"Sul"},
+  {sigla:"SC",nome:"Santa Catarina",regiao:"Sul"},
+  {sigla:"SE",nome:"Sergipe",regiao:"Nordeste"},
+  {sigla:"SP",nome:"São Paulo",regiao:"Sudeste"},
+  {sigla:"TO",nome:"Tocantins",regiao:"Norte"},
+  {sigla:"AP",nome:"Amapá",regiao:"Norte"},
+];
+
+let estado={rodada:0,acertos:0,erros:0,bloqueado:false,perguntas:[],estadosExibidos:[]};
+
+function embaralhar(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function iniciar(){
+  estado={rodada:0,acertos:0,erros:0,bloqueado:false,perguntas:embaralhar([...ESTADOS]).slice(0,10),estadosExibidos:[]};
+  document.getElementById('tela-fim').classList.remove('ativa');
+  renderGrid();
+  proximaRodada();
+}
+
+function renderGrid(){
+  const grid=document.getElementById('estados-grid');
+  grid.innerHTML='';
+  // Mostra 15 estados aleatórios incluindo os da pergunta
+  const base=embaralhar([...ESTADOS]).slice(0,15);
+  estado.estadosExibidos=base;
+  base.forEach(e=>{
+    const btn=document.createElement('div');
+    btn.className='btn-estado';btn.dataset.sigla=e.sigla;
+    btn.innerHTML=`<span class="estado-sigla">${e.sigla}</span><span class="estado-nome">${e.nome}</span>`;
+    btn.addEventListener('click',()=>responder(e.sigla,btn));
+    grid.appendChild(btn);
+  });
+}
+
+function garantirEstadoNoGrid(estadoCorreto){
+  const grid=document.getElementById('estados-grid');
+  const btns=[...grid.querySelectorAll('.btn-estado')];
+  const jaEsta=btns.some(b=>b.dataset.sigla===estadoCorreto.sigla);
+  if(!jaEsta){
+    const aleatorio=btns[Math.floor(Math.random()*btns.length)];
+    aleatorio.dataset.sigla=estadoCorreto.sigla;
+    aleatorio.querySelector('.estado-sigla').textContent=estadoCorreto.sigla;
+    aleatorio.querySelector('.estado-nome').textContent=estadoCorreto.nome;
+  }
+}
+
+function proximaRodada(){
+  if(estado.rodada>=estado.perguntas.length){terminar();return;}
+  estado.bloqueado=false;
+  const q=estado.perguntas[estado.rodada];
+  estado.rodada++;
+  document.getElementById('num-rodada').textContent=`${estado.rodada}/10`;
+  document.getElementById('perg-estado').textContent=q.nome;
+  document.getElementById('perg-regiao').textContent=`Região ${q.regiao}`;
+  // Remove classes de feedback anterior
+  document.querySelectorAll('.btn-estado').forEach(b=>{b.classList.remove('acerto','erro');});
+  garantirEstadoNoGrid(q);
+}
+
+function responder(sigla,btn){
+  if(estado.bloqueado)return;
+  const q=estado.perguntas[estado.rodada-1];
+  estado.bloqueado=true;
+  if(sigla===q.sigla){
+    btn.classList.add('acerto');
+    estado.acertos++;
+    document.getElementById('num-acertos').textContent=estado.acertos;
+    mostrarFeedback('⭐','#4ADE80');
+    explodir(btn,'#4ADE80');
+  } else {
+    btn.classList.add('erro');
+    estado.erros++;
+    document.getElementById('num-erros').textContent=estado.erros;
+    mostrarFeedback('❌','#F87171');
+    // Mostra correto
+    document.querySelectorAll('.btn-estado').forEach(b=>{if(b.dataset.sigla===q.sigla)b.classList.add('acerto');});
+  }
+  setTimeout(proximaRodada,1200);
+}
+
+function mostrarFeedback(txt,cor){
+  const el=document.createElement('div');el.className='feedback-msg';el.textContent=txt;el.style.color=cor;
+  document.getElementById('feedback-overlay').appendChild(el);
+  setTimeout(()=>el.remove(),900);
+}
+
+function explodir(el,cor){
+  const rect=el.getBoundingClientRect();
+  const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+  for(let i=0;i<10;i++){
+    const p=document.createElement('div');p.className='particula';
+    const ang=(Math.PI*2*i)/10,dist=50+Math.random()*60,sz=6+Math.random()*6;
+    p.style.cssText=`left:${cx}px;top:${cy}px;width:${sz}px;height:${sz}px;background:${cor};--dx:${Math.cos(ang)*dist}px;--dy:${Math.sin(ang)*dist}px;`;
+    document.body.appendChild(p);setTimeout(()=>p.remove(),800);
+  }
+}
+
+function terminar(){
+  document.getElementById('fim-acertos').textContent=estado.acertos;
+  document.getElementById('fim-erros').textContent=estado.erros;
+  document.getElementById('tela-fim').classList.add('ativa');
+  for(let i=0;i<40;i++){setTimeout(()=>{
+    const p=document.createElement('div');p.className='particula';
+    const cores=['#FFD700','#4ADE80','#60A5FA','#F472B6'];
+    const sz=8+Math.random()*10;
+    p.style.cssText=`left:${Math.random()*100}vw;top:${Math.random()*30}vh;width:${sz}px;height:${sz}px;background:${cores[Math.floor(Math.random()*cores.length)]};border-radius:${Math.random()>.5?'50%':'3px'};--dx:${(Math.random()-.5)*200}px;--dy:${80+Math.random()*200}px;animation-duration:${1+Math.random()}s;`;
+    document.body.appendChild(p);setTimeout(()=>p.remove(),2000);
+  },i*55);}
+}
+function reiniciar(){iniciar();}
+iniciar();
+</script>
+</body>
+</html>

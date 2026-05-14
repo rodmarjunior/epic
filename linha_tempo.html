@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linha do Tempo</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;user-select:none;}
+body{font-family:'Nunito',sans-serif;background:linear-gradient(135deg,#7C3AED,#9333EA,#6D28D9);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:1vh;}
+.container{position:relative;z-index:10;width:96vw;max-width:1050px;display:flex;flex-direction:column;align-items:center;gap:1.8vh;}
+.header{display:flex;align-items:center;justify-content:space-between;width:100%;background:rgba(255,255,255,.2);border-radius:20px;padding:.8vh 2vw;border:2px solid rgba(255,255,255,.3);}
+.titulo{font-size:clamp(1.3rem,3vw,1.9rem);color:#fff;font-weight:900;}
+.score-box{display:flex;gap:1vw;}
+.score-item{background:rgba(255,255,255,.2);border-radius:12px;padding:.3vh 1vw;text-align:center;min-width:70px;}
+.score-label{font-size:.65rem;color:rgba(255,255,255,.8);text-transform:uppercase;}
+.score-num{font-size:clamp(1.2rem,2.5vw,1.7rem);font-weight:900;color:#fff;line-height:1;}
+.instrucao{background:rgba(255,255,255,.92);border-radius:18px;padding:1vh 2vw;width:100%;text-align:center;font-size:clamp(.95rem,2.2vw,1.3rem);font-weight:800;color:#7C3AED;}
+/* Linha do tempo montagem */
+.slots-linha{display:flex;align-items:center;gap:.8vw;width:100%;justify-content:center;flex-wrap:wrap;}
+.slot-tempo{
+  display:flex;flex-direction:column;align-items:center;gap:.3vh;
+  flex:1;min-width:clamp(90px,13vw,145px);max-width:160px;
+}
+.slot-num-label{font-size:.75rem;font-weight:900;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.1em;}
+.slot-card{
+  width:100%;min-height:clamp(80px,12vw,115px);
+  border-radius:16px;border:3px dashed rgba(255,255,255,.5);
+  background:rgba(255,255,255,.12);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:.5vh .3vw;transition:all .2s;cursor:pointer;
+  text-align:center;
+}
+.slot-card.preenchido{border-style:solid;border-color:rgba(255,255,255,.8);background:rgba(255,255,255,.25);}
+.slot-card.correto{border-color:#86EFAC;background:rgba(134,239,172,.25);}
+.slot-card.errado{border-color:#FCA5A5;background:rgba(252,165,165,.25);animation:shake .35s ease;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.slot-emoji{font-size:clamp(1.5rem,4vw,2.5rem);}
+.slot-texto{font-size:clamp(.6rem,1.4vw,.85rem);font-weight:900;color:#fff;margin-top:.2vh;text-align:center;}
+.seta-tempo{font-size:clamp(1rem,2.5vw,1.8rem);color:rgba(255,255,255,.5);}
+/* Cartas para ordenar */
+.cartas-wrap{display:flex;gap:1.5vw;justify-content:center;flex-wrap:wrap;width:100%;}
+.carta{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:clamp(110px,15vw,155px);min-height:clamp(90px,13vw,120px);
+  border-radius:18px;background:rgba(255,255,255,.92);
+  cursor:pointer;transition:transform .18s,box-shadow .18s;
+  box-shadow:0 6px 20px rgba(0,0,0,.2);border:3px solid transparent;
+  padding:.6vh .4vw;text-align:center;
+}
+.carta:hover{transform:scale(1.06) translateY(-4px);box-shadow:0 12px 30px rgba(0,0,0,.25);}
+.carta:active{transform:scale(.95);}
+.carta.selecionada{border-color:#FFD700;box-shadow:0 0 0 4px rgba(255,215,0,.4),0 8px 24px rgba(0,0,0,.2);}
+.carta.usada{opacity:.2;pointer-events:none;}
+.carta-emoji{font-size:clamp(1.6rem,4vw,2.6rem);}
+.carta-ano{font-size:clamp(.8rem,1.8vw,1.1rem);font-weight:900;color:#7C3AED;}
+.carta-texto{font-size:clamp(.6rem,1.3vw,.8rem);font-weight:800;color:#555;margin-top:.2vh;}
+#feedback-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;pointer-events:none;display:flex;align-items:center;justify-content:center;}
+.feedback-msg{font-family:'Nunito',sans-serif;font-size:clamp(4rem,14vw,10rem);font-weight:900;animation:feedAnim .8s ease forwards;opacity:0;}
+@keyframes feedAnim{0%{transform:scale(.3);opacity:1}60%{transform:scale(1.2);opacity:1}100%{transform:scale(1.5);opacity:0}}
+.particula{position:fixed;border-radius:50%;pointer-events:none;z-index:99;animation:explode .7s ease forwards;}
+@keyframes explode{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}}
+#tela-fim{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#7C3AED,#6D28D9);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;gap:2vh;}
+#tela-fim.ativa{display:flex;}
+.fim-emoji{font-size:clamp(4rem,12vw,8rem);animation:troFeu .8s cubic-bezier(.175,.885,.32,1.275);}
+@keyframes troFeu{from{transform:scale(0) rotate(-180deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+.fim-titulo{font-size:clamp(2rem,6vw,4rem);font-weight:900;color:#fff;text-align:center;}
+.fim-sub{font-size:clamp(1rem,2.5vw,1.4rem);color:rgba(255,255,255,.8);text-align:center;max-width:80%;}
+.btn-reiniciar{background:#fff;border:none;border-radius:18px;padding:1.2vh 4vw;font-family:'Nunito',sans-serif;font-size:clamp(1.2rem,3vw,1.6rem);font-weight:900;color:#7C3AED;cursor:pointer;margin-top:1vh;transition:transform .2s;}
+.btn-reiniciar:hover{transform:scale(1.08);}
+</style>
+</head>
+<body>
+<div id="feedback-overlay"></div>
+<div class="container">
+  <div class="header">
+    <div class="titulo">📅 Linha do Tempo do Brasil</div>
+    <div class="score-box">
+      <div class="score-item"><span class="score-label">Rodada</span><span class="score-num" id="num-rodada">1/4</span></div>
+      <div class="score-item"><span class="score-label">Acertos</span><span class="score-num" id="num-acertos" style="color:#86EFAC">0</span></div>
+      <div class="score-item"><span class="score-label">Tentativas</span><span class="score-num" id="num-tentativas" style="color:#FDE68A">0</span></div>
+    </div>
+  </div>
+  <div class="instrucao" id="instrucao">Toque em uma carta e depois no lugar certo na linha do tempo!</div>
+  <div class="slots-linha" id="slots-linha"></div>
+  <div class="cartas-wrap" id="cartas-wrap"></div>
+</div>
+<div id="tela-fim">
+  <div class="fim-emoji">🏅</div>
+  <div class="fim-titulo">Você é um historiador!</div>
+  <div class="fim-sub" id="fim-sub">Você ordenou todos os eventos do Brasil!</div>
+  <button class="btn-reiniciar" onclick="reiniciar()">🔄 Jogar de novo!</button>
+</div>
+<script>
+const RODADAS=[
+  {
+    titulo:"Descobrimento e Brasil Colônia",
+    eventos:[
+      {emoji:"⛵",ano:"1500",texto:"Pedro Álvares Cabral chega ao Brasil",ordem:1},
+      {emoji:"⛪",ano:"1549",texto:"Fundação da primeira capital: Salvador",ordem:2},
+      {emoji:"🌿",ano:"1630",texto:"Holandeses ocupam o Nordeste",ordem:3},
+      {emoji:"🐟",ano:"1695",texto:"Descoberta do ouro em Minas Gerais",ordem:4},
+    ]
+  },
+  {
+    titulo:"Independência e Império",
+    eventos:[
+      {emoji:"🚢",ano:"1808",texto:"Família Real portuguesa chega ao Brasil",ordem:1},
+      {emoji:"📜",ano:"1822",texto:"Dom Pedro I proclama a Independência",ordem:2},
+      {emoji:"👑",ano:"1841",texto:"Dom Pedro II é coroado imperador",ordem:3},
+      {emoji:"⚖️",ano:"1888",texto:"Princesa Isabel assina a Lei Áurea",ordem:4},
+    ]
+  },
+  {
+    titulo:"República e Século XX",
+    eventos:[
+      {emoji:"🏛️",ano:"1889",texto:"Proclamação da República",ordem:1},
+      {emoji:"✈️",ano:"1906",texto:"Santos Dumont voa com o 14-Bis",ordem:2},
+      {emoji:"🏙️",ano:"1960",texto:"Inauguração de Brasília",ordem:3},
+      {emoji:"🌍",ano:"1992",texto:"Rio sedia a Eco-92",ordem:4},
+    ]
+  },
+  {
+    titulo:"Invenções e Descobertas",
+    eventos:[
+      {emoji:"💡",ano:"1879",texto:"Edison inventa a lâmpada elétrica",ordem:1},
+      {emoji:"📞",ano:"1876",texto:"Graham Bell inventa o telefone",ordem:2},
+      {emoji:"🚗",ano:"1885",texto:"Karl Benz cria o primeiro automóvel",ordem:3},
+      {emoji:"🖥️",ano:"1969",texto:"Primeira mensagem pela internet",ordem:4},
+    ]
+  },
+];
+
+let estado={rodada:0,acertos:0,tentativas:0,cartaSelecionada:null,corretas:0};
+
+function iniciar(){
+  estado={rodada:0,acertos:0,tentativas:0,cartaSelecionada:null,corretas:0};
+  document.getElementById('tela-fim').classList.remove('ativa');
+  proximaRodada();
+}
+
+function proximaRodada(){
+  if(estado.rodada>=RODADAS.length){terminar();return;}
+  const r=RODADAS[estado.rodada];
+  estado.rodada++;
+  estado.corretas=0;
+  estado.cartaSelecionada=null;
+  document.getElementById('num-rodada').textContent=`${estado.rodada}/${RODADAS.length}`;
+  document.getElementById('instrucao').textContent=`📅 ${r.titulo} — ordene do mais antigo para o mais recente!`;
+  renderSlots(r);
+  renderCartas(r);
+}
+
+function renderSlots(r){
+  const wrap=document.getElementById('slots-linha');
+  wrap.innerHTML='';
+  r.eventos.forEach((e,i)=>{
+    if(i>0){const s=document.createElement('div');s.className='seta-tempo';s.textContent='→';wrap.appendChild(s);}
+    const col=document.createElement('div');col.className='slot-tempo';
+    const lbl=document.createElement('div');lbl.className='slot-num-label';lbl.textContent=`${i+1}°`;
+    const card=document.createElement('div');
+    card.className='slot-card';card.dataset.ordem=e.ordem;
+    card.innerHTML=`<span class="slot-emoji" style="opacity:.3">❓</span><span class="slot-texto" style="opacity:.4">???</span>`;
+    card.addEventListener('click',()=>tentarSlot(card,e));
+    col.appendChild(lbl);col.appendChild(card);
+    wrap.appendChild(col);
+  });
+}
+
+function renderCartas(r){
+  const wrap=document.getElementById('cartas-wrap');
+  wrap.innerHTML='';
+  const embaralhadas=[...r.eventos].sort(()=>Math.random()-.5);
+  embaralhadas.forEach(e=>{
+    const carta=document.createElement('div');
+    carta.className='carta';carta.dataset.ordem=e.ordem;
+    carta.innerHTML=`<span class="carta-emoji">${e.emoji}</span><span class="carta-ano">${e.ano}</span><span class="carta-texto">${e.texto}</span>`;
+    carta.addEventListener('click',()=>selecionarCarta(carta,e));
+    wrap.appendChild(carta);
+  });
+}
+
+function selecionarCarta(carta,ev){
+  if(carta.classList.contains('usada'))return;
+  document.querySelectorAll('.carta.selecionada').forEach(c=>c.classList.remove('selecionada'));
+  carta.classList.add('selecionada');
+  estado.cartaSelecionada={carta,ev};
+  document.getElementById('instrucao').textContent=`"${ev.ano} — ${ev.texto}" selecionado! Toque no slot correto!`;
+}
+
+function tentarSlot(slot,etapaSlot){
+  if(!estado.cartaSelecionada)return;
+  if(slot.classList.contains('preenchido'))return;
+  const {carta,ev}=estado.cartaSelecionada;
+  estado.tentativas++;
+  document.getElementById('num-tentativas').textContent=estado.tentativas;
+  if(ev.ordem===etapaSlot.ordem){
+    slot.innerHTML=`<span class="slot-emoji">${ev.emoji}</span><span class="slot-texto">${ev.ano} — ${ev.texto}</span>`;
+    slot.classList.add('preenchido','correto');
+    carta.classList.add('usada');carta.classList.remove('selecionada');
+    estado.cartaSelecionada=null;
+    estado.corretas++;
+    estado.acertos++;
+    document.getElementById('num-acertos').textContent=estado.acertos;
+    mostrarFeedback('✅','#86EFAC');
+    explodir(slot,'#86EFAC');
+    document.getElementById('instrucao').textContent='Ótimo! Continue ordenando!';
+    const r=RODADAS[estado.rodada-1];
+    if(estado.corretas>=r.eventos.length)setTimeout(proximaRodada,1200);
+  } else {
+    slot.classList.add('errado');
+    mostrarFeedback('❌','#FCA5A5');
+    setTimeout(()=>slot.classList.remove('errado'),400);
+    document.getElementById('instrucao').textContent='Ops! Tente outro lugar!';
+  }
+}
+
+function mostrarFeedback(txt,cor){
+  const el=document.createElement('div');el.className='feedback-msg';el.textContent=txt;el.style.color=cor;
+  document.getElementById('feedback-overlay').appendChild(el);
+  setTimeout(()=>el.remove(),900);
+}
+
+function explodir(el,cor){
+  const rect=el.getBoundingClientRect();
+  const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+  for(let i=0;i<10;i++){
+    const p=document.createElement('div');p.className='particula';
+    const ang=(Math.PI*2*i)/10,dist=50+Math.random()*60,sz=6+Math.random()*6;
+    p.style.cssText=`left:${cx}px;top:${cy}px;width:${sz}px;height:${sz}px;background:${cor};--dx:${Math.cos(ang)*dist}px;--dy:${Math.sin(ang)*dist}px;`;
+    document.body.appendChild(p);setTimeout(()=>p.remove(),800);
+  }
+}
+
+function terminar(){
+  document.getElementById('fim-sub').textContent=`Você acertou ${estado.acertos} eventos em ${estado.tentativas} tentativas!`;
+  document.getElementById('tela-fim').classList.add('ativa');
+  for(let i=0;i<40;i++){setTimeout(()=>{
+    const p=document.createElement('div');p.className='particula';
+    const cores=['#FFD700','#86EFAC','#C4B5FD','#F9A8D4'];
+    const sz=8+Math.random()*10;
+    p.style.cssText=`left:${Math.random()*100}vw;top:${Math.random()*30}vh;width:${sz}px;height:${sz}px;background:${cores[Math.floor(Math.random()*cores.length)]};border-radius:${Math.random()>.5?'50%':'3px'};--dx:${(Math.random()-.5)*200}px;--dy:${80+Math.random()*200}px;animation-duration:${1+Math.random()}s;`;
+    document.body.appendChild(p);setTimeout(()=>p.remove(),2000);
+  },i*55);}
+}
+function reiniciar(){iniciar();}
+iniciar();
+</script>
+</body>
+</html>

@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Missão Gráficos — Jogo Interativo</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #f6fbff;
+      --panel: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --primary: #2563eb;
+      --secondary: #7c3aed;
+      --accent: #0ea5e9;
+      --good: #16a34a;
+      --good-bg: #ecfdf5;
+      --bad: #dc2626;
+      --bad-bg: #fef2f2;
+      --warning: #f59e0b;
+      --border: #dbeafe;
+      --soft: #eff6ff;
+      --shadow: 0 20px 50px rgba(15, 23, 42, 0.10);
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      background: radial-gradient(circle at top left, #dbeafe 0%, transparent 25%),
+                  radial-gradient(circle at top right, #ede9fe 0%, transparent 22%),
+                  linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+      color: var(--text);
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 18px;
+    }
+
+    .app {
+      width: min(1220px, 100%);
+      min-height: min(94vh, 920px);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .screen {
+      display: none;
+      flex: 1;
+      padding: 28px;
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .center {
+      align-items: center;
+      text-align: center;
+      gap: 18px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #075985;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.1rem, 4vw, 3.8rem);
+      line-height: 1.05;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      line-height: 1.15;
+    }
+
+    p {
+      margin: 0;
+      font-size: clamp(1rem, 1.6vw, 1.16rem);
+      line-height: 1.6;
+      color: var(--muted);
+      max-width: 900px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 20px;
+      min-height: 68px;
+      padding: 16px 26px;
+      font-size: 1.08rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: #fff;
+      min-width: 220px;
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: var(--text);
+    }
+
+    .guide-box {
+      width: min(980px, 100%);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 6px;
+    }
+
+    .guide-item {
+      background: #f8fbff;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      text-align: left;
+      line-height: 1.5;
+      font-size: 0.98rem;
+    }
+
+    .guide-item strong { color: var(--text); }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 18px;
+      background: #e0f2fe;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      transition: width 0.3s ease;
+    }
+
+    .stat {
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      font-weight: 800;
+      white-space: nowrap;
+      color: #1e293b;
+    }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 1.1fr) minmax(340px, 0.9fr);
+      gap: 18px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .chart-panel,
+    .question-panel {
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      border: 1px solid #e5eefb;
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .chart-type {
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #ede9fe;
+      color: #5b21b6;
+      font-weight: 800;
+      font-size: 0.95rem;
+    }
+
+    .chart-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .canvas-wrap {
+      flex: 1;
+      min-height: 420px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 22px;
+      padding: 12px;
+    }
+
+    canvas {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .legend {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      font-size: 0.95rem;
+      color: #334155;
+      font-weight: 700;
+    }
+
+    .swatch {
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      flex: 0 0 auto;
+    }
+
+    .question-panel {
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .question-block {
+      display: grid;
+      gap: 14px;
+    }
+
+    .question-label {
+      color: var(--muted);
+      font-size: 0.96rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .question-text {
+      font-size: clamp(1.35rem, 2.2vw, 2rem);
+      line-height: 1.35;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .context-box {
+      background: var(--soft);
+      border: 1px solid #bfdbfe;
+      border-radius: 18px;
+      padding: 14px 16px;
+      font-size: 0.98rem;
+      line-height: 1.55;
+      color: #1e3a8a;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .option {
+      width: 100%;
+      min-height: 74px;
+      padding: 16px 18px;
+      border: 2px solid #dbeafe;
+      border-radius: 20px;
+      background: #ffffff;
+      color: var(--text);
+      text-align: left;
+      font-size: clamp(1rem, 1.4vw, 1.08rem);
+      font-weight: 800;
+      line-height: 1.45;
+      cursor: pointer;
+      transition: transform 0.12s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .option:hover {
+      transform: translateY(-1px);
+      background: #f8fbff;
+    }
+
+    .option .tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      margin-right: 10px;
+      border-radius: 999px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-weight: 900;
+      vertical-align: middle;
+    }
+
+    .option.correct {
+      background: var(--good-bg);
+      border-color: #86efac;
+      color: #166534;
+    }
+
+    .option.wrong {
+      background: var(--bad-bg);
+      border-color: #fca5a5;
+      color: #991b1b;
+    }
+
+    .option.disabled { opacity: 0.72; }
+
+    .feedback {
+      display: none;
+      border-radius: 20px;
+      padding: 16px 18px;
+      font-size: 1rem;
+      line-height: 1.55;
+      font-weight: 700;
+      border: 2px solid transparent;
+    }
+
+    .feedback.show { display: block; }
+    .feedback.correct { background: var(--good-bg); border-color: #86efac; }
+    .feedback.wrong { background: var(--bad-bg); border-color: #fca5a5; }
+
+    .feedback strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--text);
+      font-size: 1.06rem;
+    }
+
+    .bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .mini-tip {
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .score-big {
+      font-size: clamp(3rem, 8vw, 6rem);
+      line-height: 1;
+      font-weight: 900;
+      color: #4338ca;
+    }
+
+    .summary {
+      width: min(950px, 100%);
+      display: grid;
+      gap: 12px;
+      margin-top: 8px;
+      text-align: left;
+    }
+
+    .summary-item {
+      background: #fcfcff;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 14px 16px;
+      line-height: 1.55;
+      font-size: 0.98rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    @media (max-width: 980px) {
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
+      .canvas-wrap {
+        min-height: 320px;
+      }
+    }
+
+    @media (max-width: 760px) {
+      body { padding: 8px; }
+      .app { min-height: 100vh; border-radius: 0; }
+      .screen { padding: 18px; }
+      .topbar { grid-template-columns: 1fr; }
+      .guide-box { grid-template-columns: 1fr; }
+      .legend { grid-template-columns: 1fr; }
+      .bottom { justify-content: center; }
+      .mini-tip { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section id="startScreen" class="screen center active">
+      <span class="badge">Missão Matemática Interativa</span>
+      <h1>Exploradores de Gráficos</h1>
+      <p>
+        Um jogo completo para interpretar <strong>gráfico de barras</strong>, <strong>gráfico de pizza</strong>, <strong>gráfico de linhas</strong> e <strong>gráfico radar</strong>. Cada rodada traz uma pergunta melhor construída, com leitura, comparação, análise e conclusão.
+      </p>
+      <div class="guide-box">
+        <div class="guide-item"><strong>Barras:</strong> ótimo para comparar quantidades.</div>
+        <div class="guide-item"><strong>Pizza:</strong> mostra partes de um todo.</div>
+        <div class="guide-item"><strong>Linhas e radar:</strong> ajudam a observar evolução e perfis.</div>
+      </div>
+      <button id="startBtn" class="btn btn-primary">Começar missão</button>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <div class="topbar">
+        <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+        <div id="roundCount" class="stat">Rodada 1/8</div>
+        <div id="scoreCount" class="stat">Pontos: 0</div>
+        <div id="typeCount" class="stat">Tipo: Barras</div>
+      </div>
+
+      <div class="game-layout">
+        <div class="chart-panel">
+          <div class="chart-header">
+            <div id="chartTitle" class="chart-title"></div>
+            <div id="chartType" class="chart-type"></div>
+          </div>
+          <div class="canvas-wrap">
+            <canvas id="chartCanvas" width="560" height="430"></canvas>
+          </div>
+          <div id="legend" class="legend"></div>
+        </div>
+
+        <div class="question-panel">
+          <div class="question-block">
+            <div class="question-label">Desafio</div>
+            <div id="questionText" class="question-text"></div>
+            <div id="contextBox" class="context-box"></div>
+          </div>
+          <div id="options" class="options"></div>
+          <div id="feedback" class="feedback"></div>
+          <div class="bottom">
+            <div class="mini-tip">Olhe o gráfico com calma antes de responder.</div>
+            <button id="nextBtn" class="btn btn-primary" style="display:none;">Próxima</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="resultScreen" class="screen center">
+      <span class="badge">Missão concluída</span>
+      <h2>Resultado final</h2>
+      <div id="finalScore" class="score-big">0/8</div>
+      <p id="finalText"></p>
+      <div id="summary" class="summary"></div>
+      <div class="actions">
+        <button id="restartBtn" class="btn btn-primary">Jogar de novo</button>
+        <button id="homeBtn" class="btn btn-secondary">Tela inicial</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const palette = ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444', '#14b8a6'];
+
+    const rounds = [
+      {
+        type: 'bar',
+        title: 'Frutas preferidas da turma',
+        context: 'O gráfico mostra quantos alunos escolheram cada fruta favorita.',
+        labels: ['Maçã', 'Banana', 'Uva', 'Melancia'],
+        values: [8, 12, 6, 10],
+        question: 'Qual fruta foi escolhida por mais alunos?',
+        options: ['Maçã', 'Banana', 'Uva', 'Melancia'],
+        answer: 1,
+        explanation: 'Banana está com 12 alunos, a maior barra do gráfico.'
+      },
+      {
+        type: 'bar',
+        title: 'Livros lidos no mês',
+        context: 'Cada barra mostra quantos livros foram lidos em cada semana.',
+        labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
+        values: [4, 7, 5, 9],
+        question: 'Em qual semana foram lidos menos livros?',
+        options: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
+        answer: 0,
+        explanation: 'A Semana 1 tem 4 livros, o menor valor do gráfico.'
+      },
+      {
+        type: 'pie',
+        title: 'Brincadeiras do recreio',
+        context: 'O gráfico de pizza mostra a parte de cada brincadeira preferida.',
+        labels: ['Futebol', 'Pega-pega', 'Amarelinha', 'Desenho'],
+        values: [40, 25, 20, 15],
+        question: 'Qual brincadeira ocupa a maior parte do gráfico?',
+        options: ['Futebol', 'Pega-pega', 'Amarelinha', 'Desenho'],
+        answer: 0,
+        explanation: 'Futebol representa 40% da pizza, a maior fatia.'
+      },
+      {
+        type: 'pie',
+        title: 'Lanches escolhidos',
+        context: 'As fatias mostram a porcentagem de alunos que escolheram cada lanche.',
+        labels: ['Sanduíche', 'Fruta', 'Bolo', 'Suco'],
+        values: [30, 20, 10, 40],
+        question: 'Qual opção representa menos alunos?',
+        options: ['Sanduíche', 'Fruta', 'Bolo', 'Suco'],
+        answer: 2,
+        explanation: 'Bolo tem 10%, a menor fatia do gráfico de pizza.'
+      },
+      {
+        type: 'line',
+        title: 'Temperatura ao longo do dia',
+        context: 'A linha mostra como a temperatura mudou da manhã até a noite.',
+        labels: ['8h', '10h', '12h', '14h', '16h', '18h'],
+        values: [18, 20, 24, 27, 25, 21],
+        question: 'Em que horário a temperatura foi mais alta?',
+        options: ['10h', '12h', '14h', '18h'],
+        answer: 2,
+        explanation: 'A linha atinge o ponto mais alto às 14h, com 27°C.'
+      },
+      {
+        type: 'line',
+        title: 'Pontos de um jogo',
+        context: 'Cada ponto na linha mostra quantos pontos a equipe fez em cada rodada.',
+        labels: ['1ª', '2ª', '3ª', '4ª', '5ª'],
+        values: [3, 5, 4, 7, 6],
+        question: 'Entre quais rodadas aconteceu o maior aumento de pontos?',
+        options: ['1ª para 2ª', '2ª para 3ª', '3ª para 4ª', '4ª para 5ª'],
+        answer: 2,
+        explanation: 'O maior aumento foi de 4 para 7, entre a 3ª e a 4ª rodada.'
+      },
+      {
+        type: 'radar',
+        title: 'Perfil de habilidades de Ana',
+        context: 'O gráfico radar mostra o desempenho de Ana em diferentes áreas, de 0 a 10.',
+        labels: ['Leitura', 'Escrita', 'Cálculo', 'Arte', 'Esportes'],
+        values: [8, 7, 9, 6, 5],
+        question: 'Em qual habilidade Ana teve melhor resultado?',
+        options: ['Leitura', 'Escrita', 'Cálculo', 'Arte'],
+        answer: 2,
+        explanation: 'No radar, Cálculo chegou ao valor 9, o maior de todos.'
+      },
+      {
+        type: 'radar',
+        title: 'Comparando habilidades da turma',
+        context: 'O radar mostra o nível médio da turma em cada habilidade.',
+        labels: ['Organização', 'Criatividade', 'Leitura', 'Trabalho em grupo', 'Atenção'],
+        values: [6, 9, 7, 8, 5],
+        question: 'Qual habilidade precisa de mais atenção da turma?',
+        options: ['Organização', 'Criatividade', 'Leitura', 'Atenção'],
+        answer: 3,
+        explanation: 'Atenção ficou com 5, o menor valor do gráfico radar.'
+      }
+    ];
+
+    let current = 0;
+    let score = 0;
+    let locked = false;
+    let history = [];
+
+    const canvas = document.getElementById('chartCanvas');
+    const ctx = canvas.getContext('2d');
+    const startScreen = document.getElementById('startScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const resultScreen = document.getElementById('resultScreen');
+    const progressBar = document.getElementById('progressBar');
+    const roundCount = document.getElementById('roundCount');
+    const scoreCount = document.getElementById('scoreCount');
+    const typeCount = document.getElementById('typeCount');
+    const chartTitle = document.getElementById('chartTitle');
+    const chartType = document.getElementById('chartType');
+    const legend = document.getElementById('legend');
+    const questionText = document.getElementById('questionText');
+    const contextBox = document.getElementById('contextBox');
+    const optionsEl = document.getElementById('options');
+    const feedbackEl = document.getElementById('feedback');
+    const nextBtn = document.getElementById('nextBtn');
+    const finalScore = document.getElementById('finalScore');
+    const finalText = document.getElementById('finalText');
+    const summary = document.getElementById('summary');
+
+    function show(screen) {
+      [startScreen, gameScreen, resultScreen].forEach(s => s.classList.remove('active'));
+      screen.classList.add('active');
+    }
+
+    function startGame() {
+      current = 0;
+      score = 0;
+      locked = false;
+      history = [];
+      show(gameScreen);
+      renderRound();
+    }
+
+    function renderRound() {
+      locked = false;
+      nextBtn.style.display = 'none';
+      feedbackEl.className = 'feedback';
+      feedbackEl.innerHTML = '';
+
+      const item = rounds[current];
+      roundCount.textContent = `Rodada ${current + 1}/${rounds.length}`;
+      scoreCount.textContent = `Pontos: ${score}`;
+      typeCount.textContent = `Tipo: ${translateType(item.type)}`;
+      chartTitle.textContent = item.title;
+      chartType.textContent = translateType(item.type);
+      questionText.textContent = item.question;
+      contextBox.textContent = item.context;
+      progressBar.style.width = `${(current / rounds.length) * 100}%`;
+
+      drawChart(item);
+      renderLegend(item);
+      renderOptions(item);
+    }
+
+    function translateType(type) {
+      return { bar: 'Barras', pie: 'Pizza', line: 'Linhas', radar: 'Radar' }[type] || type;
+    }
+
+    function renderLegend(item) {
+      legend.innerHTML = item.labels.map((label, i) => `
+        <div class="legend-item">
+          <span class="swatch" style="background:${palette[i % palette.length]}"></span>
+          <span>${label}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderOptions(item) {
+      optionsEl.innerHTML = '';
+      const letters = ['A', 'B', 'C', 'D'];
+      item.options.forEach((option, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'option';
+        btn.innerHTML = `<span class="tag">${letters[index]}</span>${option}`;
+        btn.addEventListener('click', () => choose(index));
+        optionsEl.appendChild(btn);
+      });
+    }
+
+    function choose(index) {
+      if (locked) return;
+      locked = true;
+      const item = rounds[current];
+      const buttons = [...document.querySelectorAll('.option')];
+      const isCorrect = index === item.answer;
+
+      if (isCorrect) score += 1;
+      scoreCount.textContent = `Pontos: ${score}`;
+      progressBar.style.width = `${((current + 1) / rounds.length) * 100}%`;
+
+      buttons.forEach((btn, i) => {
+        if (i === item.answer) btn.classList.add('correct');
+        else if (i === index) btn.classList.add('wrong');
+        else btn.classList.add('disabled');
+        btn.disabled = true;
+      });
+
+      feedbackEl.className = `feedback show ${isCorrect ? 'correct' : 'wrong'}`;
+      feedbackEl.innerHTML = isCorrect
+        ? `<strong>Resposta correta!</strong>${item.explanation}`
+        : `<strong>Resposta incorreta.</strong>${item.explanation}`;
+
+      history.push({
+        title: item.title,
+        question: item.question,
+        selected: item.options[index],
+        correct: item.options[item.answer]
+      });
+
+      nextBtn.style.display = 'inline-flex';
+    }
+
+    function nextRound() {
+      current += 1;
+      if (current < rounds.length) renderRound();
+      else renderResults();
+    }
+
+    function renderResults() {
+      show(resultScreen);
+      finalScore.textContent = `${score}/${rounds.length}`;
+      if (score === rounds.length) {
+        finalText.textContent = 'Excelente. Você leu diferentes tipos de gráficos com muita atenção.';
+      } else if (score >= 6) {
+        finalText.textContent = 'Muito bom. Você já interpreta gráficos muito bem.';
+      } else if (score >= 4) {
+        finalText.textContent = 'Bom resultado. Continue observando títulos, eixos, partes e comparações.';
+      } else {
+        finalText.textContent = 'Você concluiu a missão. Jogar novamente vai ajudar a fortalecer a leitura de gráficos.';
+      }
+
+      summary.innerHTML = history.map((item, i) => `
+        <div class="summary-item">
+          <strong>${i + 1}. ${item.title}</strong><br>
+          ${item.question}<br>
+          Sua resposta: ${item.selected}<br>
+          Resposta correta: ${item.correct}
+        </div>
+      `).join('');
+    }
+
+    function drawChart(item) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (item.type === 'bar') drawBarChart(item);
+      if (item.type === 'pie') drawPieChart(item);
+      if (item.type === 'line') drawLineChart(item);
+      if (item.type === 'radar') drawRadarChart(item);
+    }
+
+    function drawBarChart(item) {
+      const W = canvas.width, H = canvas.height;
+      const left = 60, right = 20, top = 20, bottom = 70;
+      const chartW = W - left - right;
+      const chartH = H - top - bottom;
+      const max = Math.max(...item.values);
+
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(left, top);
+      ctx.lineTo(left, top + chartH);
+      ctx.lineTo(left + chartW, top + chartH);
+      ctx.stroke();
+
+      ctx.fillStyle = '#64748b';
+      ctx.font = '14px Arial';
+
+      for (let i = 0; i <= 5; i++) {
+        const y = top + chartH - (chartH / 5) * i;
+        const value = Math.round((max / 5) * i);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(left, y);
+        ctx.lineTo(left + chartW, y);
+        ctx.stroke();
+        ctx.fillText(String(value), 20, y + 5);
+      }
+
+      const barSpace = chartW / item.values.length;
+      const barWidth = barSpace * 0.55;
+      item.values.forEach((v, i) => {
+        const x = left + i * barSpace + (barSpace - barWidth) / 2;
+        const h = (v / max) * chartH;
+        const y = top + chartH - h;
+        ctx.fillStyle = palette[i % palette.length];
+        roundRect(ctx, x, y, barWidth, h, 12, true, false);
+        ctx.fillStyle = '#0f172a';
+        ctx.textAlign = 'center';
+        ctx.fillText(String(v), x + barWidth / 2, y - 8);
+        ctx.fillText(item.labels[i], x + barWidth / 2, top + chartH + 24);
+      });
+      ctx.textAlign = 'start';
+    }
+
+    function drawPieChart(item) {
+      const W = canvas.width, H = canvas.height;
+      const cx = W / 2, cy = H / 2 - 10, r = 130;
+      const total = item.values.reduce((a, b) => a + b, 0);
+      let start = -Math.PI / 2;
+      item.values.forEach((value, i) => {
+        const slice = (value / total) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, start, start + slice);
+        ctx.closePath();
+        ctx.fillStyle = palette[i % palette.length];
+        ctx.fill();
+
+        const mid = start + slice / 2;
+        const tx = cx + Math.cos(mid) * (r * 0.65);
+        const ty = cy + Math.sin(mid) * (r * 0.65);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${value}%`, tx, ty);
+        start += slice;
+      });
+      ctx.textAlign = 'start';
+    }
+
+    function drawLineChart(item) {
+      const W = canvas.width, H = canvas.height;
+      const left = 60, right = 25, top = 25, bottom = 70;
+      const chartW = W - left - right;
+      const chartH = H - top - bottom;
+      const max = Math.max(...item.values);
+
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(left, top);
+      ctx.lineTo(left, top + chartH);
+      ctx.lineTo(left + chartW, top + chartH);
+      ctx.stroke();
+
+      ctx.fillStyle = '#64748b';
+      ctx.font = '14px Arial';
+      for (let i = 0; i <= 5; i++) {
+        const y = top + chartH - (chartH / 5) * i;
+        const value = Math.round((max / 5) * i);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(left, y);
+        ctx.lineTo(left + chartW, y);
+        ctx.stroke();
+        ctx.fillText(String(value), 20, y + 5);
+      }
+
+      const step = chartW / (item.values.length - 1);
+      ctx.beginPath();
+      item.values.forEach((v, i) => {
+        const x = left + i * step;
+        const y = top + chartH - (v / max) * chartH;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = '#2563eb';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      item.values.forEach((v, i) => {
+        const x = left + i * step;
+        const y = top + chartH - (v / max) * chartH;
+        ctx.beginPath();
+        ctx.arc(x, y, 7, 0, Math.PI * 2);
+        ctx.fillStyle = palette[i % palette.length];
+        ctx.fill();
+        ctx.fillStyle = '#0f172a';
+        ctx.textAlign = 'center';
+        ctx.fillText(String(v), x, y - 12);
+        ctx.fillText(item.labels[i], x, top + chartH + 24);
+      });
+      ctx.textAlign = 'start';
+    }
+
+    function drawRadarChart(item) {
+      const W = canvas.width, H = canvas.height;
+      const cx = W / 2, cy = H / 2;
+      const radius = 145;
+      const levels = 5;
+      const maxValue = 10;
+      const n = item.labels.length;
+
+      ctx.strokeStyle = '#dbeafe';
+      ctx.lineWidth = 1.5;
+      for (let level = 1; level <= levels; level++) {
+        const r = radius * (level / levels);
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+          const angle = -Math.PI / 2 + (Math.PI * 2 * i) / n;
+          const x = cx + Math.cos(angle) * r;
+          const y = cy + Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      for (let i = 0; i < n; i++) {
+        const angle = -Math.PI / 2 + (Math.PI * 2 * i) / n;
+        const x = cx + Math.cos(angle) * radius;
+        const y = cy + Math.sin(angle) * radius;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.stroke();
+
+        const labelX = cx + Math.cos(angle) * (radius + 28);
+        const labelY = cy + Math.sin(angle) * (radius + 28);
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 15px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(item.labels[i], labelX, labelY);
+      }
+
+      ctx.beginPath();
+      item.values.forEach((value, i) => {
+        const angle = -Math.PI / 2 + (Math.PI * 2 * i) / n;
+        const r = radius * (value / maxValue);
+        const x = cx + Math.cos(angle) * r;
+        const y = cy + Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(59,130,246,0.25)';
+      ctx.strokeStyle = '#2563eb';
+      ctx.lineWidth = 4;
+      ctx.fill();
+      ctx.stroke();
+
+      item.values.forEach((value, i) => {
+        const angle = -Math.PI / 2 + (Math.PI * 2 * i) / n;
+        const r = radius * (value / maxValue);
+        const x = cx + Math.cos(angle) * r;
+        const y = cy + Math.sin(angle) * r;
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = palette[i % palette.length];
+        ctx.fill();
+      });
+      ctx.textAlign = 'start';
+    }
+
+    function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+      if (height < 0) height = 0;
+      radius = Math.min(radius, width / 2, height / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.arcTo(x + width, y, x + width, y + height, radius);
+      ctx.arcTo(x + width, y + height, x, y + height, radius);
+      ctx.arcTo(x, y + height, x, y, radius);
+      ctx.arcTo(x, y, x + width, y, radius);
+      ctx.closePath();
+      if (fill) ctx.fill();
+      if (stroke) ctx.stroke();
+    }
+
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('restartBtn').addEventListener('click', startGame);
+    document.getElementById('homeBtn').addEventListener('click', () => show(startScreen));
+    nextBtn.addEventListener('click', nextRound);
+
+    document.addEventListener('keydown', (e) => {
+      if (!gameScreen.classList.contains('active') || locked) return;
+      const num = Number(e.key);
+      if (num >= 1 && num <= 4) {
+        const btn = document.querySelectorAll('.option')[num - 1];
+        if (btn) btn.click();
+      }
+    });
+  </script>
+</body>
+</html>

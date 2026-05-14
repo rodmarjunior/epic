@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Desafio Conjugação - Auto-Ajustável</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --primary: #38bdf8;
+            --success: #22c55e;
+            --error: #ef4444;
+            --text: #f8fafc;
+        }
+
+        /* O segredo do ajuste: Box-sizing e Height dinâmico */
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Mata qualquer rolagem */
+            background-color: var(--bg);
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Container que se adapta ao espaço disponível (Safe Area) */
+        #viewport-fix {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        header {
+            height: 10vh;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text);
+            border-bottom: 2px solid #334155;
+            margin-bottom: 15px;
+        }
+
+        /* Área central que encolhe ou estica conforme a tela */
+        main {
+            flex: 1; 
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            min-height: 0; /* Permite que o flex encolha o conteúdo se necessário */
+        }
+
+        #target-card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.3);
+        }
+
+        #verb {
+            font-size: clamp(2rem, 8vh, 5rem);
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0;
+        }
+
+        #info {
+            font-size: clamp(1rem, 3vh, 1.8rem);
+            color: #94a3b8;
+        }
+
+        /* Grid de opções que se auto-ajusta */
+        #options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 1000px;
+            height: 50vh; /* Ocupa metade da altura disponível */
+        }
+
+        .btn {
+            background: var(--card);
+            border: 3px solid #334155;
+            border-radius: 12px;
+            color: white;
+            font-size: clamp(1.2rem, 4vh, 2.5rem);
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.2s;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .btn.correct { background: var(--success); border-color: var(--success); }
+        .btn.wrong { background: var(--error); border-color: var(--error); }
+
+        /* Animação de acerto */
+        @keyframes celeb {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .correct { animation: celeb 0.4s ease; }
+    </style>
+</head>
+<body>
+
+    <div id="viewport-fix">
+        <header>
+            <div style="font-size: 1.5rem; font-weight: bold;">CONJUGAÇÃO</div>
+            <div id="timer" style="font-size: 1.5rem; color: #fbbf24;">Tempo: 30s</div>
+            <div style="font-size: 1.5rem;">Pontos: <span id="score">0</span></div>
+        </header>
+
+        <main>
+            <div id="target-card">
+                <p style="color: #94a3b8; margin: 0;">Conjugue o verbo:</p>
+                <h1 id="verb">CARREGANDO...</h1>
+                <div id="info">(Pessoa + Tempo)</div>
+            </div>
+
+            <div id="options-grid">
+                </div>
+        </main>
+    </div>
+
+    <script>
+        const verbos = [
+            { v: "ESTUDAR", p: "Nós", t: "Futuro do Presente", c: "Estudaremos", o: ["Estudamos", "Estudarão", "Estudaremos", "Estudaria"] },
+            { v: "FAZER", p: "Eu", t: "Pretérito Perfeito", c: "Fiz", o: ["Faço", "Fazia", "Fiz", "Farei"] },
+            { v: "TRAZER", p: "Eles", t: "Presente", c: "Trazem", o: ["Traziam", "Trarão", "Trazem", "Trouxeram"] },
+            { v: "IR", p: "Tu", t: "Pretérito Imperfeito", c: "Ias", o: ["Foste", "Vais", "Ias", "Irás"] }
+        ];
+
+        let index = 0, score = 0, tempo = 30;
+
+        function render() {
+            const atual = verbos[index];
+            document.getElementById('verb').innerText = atual.v;
+            document.getElementById('info').innerText = `(${atual.p} • ${atual.t})`;
+            
+            const grid = document.getElementById('options-grid');
+            grid.innerHTML = '';
+            
+            atual.o.sort(() => Math.random() - 0.5).forEach(opt => {
+                const b = document.createElement('div');
+                b.className = 'btn';
+                b.innerText = opt;
+                b.onclick = () => checar(opt, atual.c, b);
+                grid.appendChild(b);
+            });
+        }
+
+        function checar(escolha, certa, elemento) {
+            if (escolha === certa) {
+                elemento.classList.add('correct');
+                score += 10;
+                document.getElementById('score').innerText = score;
+                setTimeout(() => {
+                    index = (index + 1) % verbos.length;
+                    render();
+                }, 1000);
+            } else {
+                elemento.classList.add('wrong');
+                setTimeout(() => elemento.classList.remove('wrong'), 500);
+            }
+        }
+
+        // Script de Auto-Ajuste de Altura (Fix para navegadores de TV/Telas Inteligentes)
+        function ajustarTela() {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+            document.getElementById('viewport-fix').style.height = `${window.innerHeight}px`;
+        }
+
+        window.addEventListener('resize', ajustarTela);
+        window.addEventListener('load', ajustarTela);
+        
+        setInterval(() => {
+            if(tempo > 0) {
+                tempo--;
+                document.getElementById('timer').innerText = `Tempo: ${tempo}s`;
+            }
+        }, 1000);
+
+        ajustarTela();
+        render();
+    </script>
+</body>
+</html>

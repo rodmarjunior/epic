@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curadoria de Sites Educacionais</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --azul:    #1E6FC5;
+    --azulL:   #EBF4FF;
+    --verde:   #16A34A;
+    --verdeL:  #ECFDF5;
+    --roxo:    #7C3AED;
+    --roxoL:   #F5F3FF;
+    --laranja: #EA580C;
+    --laranjaL:#FFF7ED;
+    --rosa:    #DB2777;
+    --rosaL:   #FDF2F8;
+    --teal:    #0D9488;
+    --tealL:   #F0FDFA;
+    --gold:    #D97706;
+    --goldL:   #FFFBEB;
+    --slate:   #334155;
+    --gray:    #64748B;
+    --grayL:   #F8FAFC;
+    --border:  #E2E8F0;
+    --white:   #FFFFFF;
+    --bg:      #F1F5F9;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--slate);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .hero {
+    background: linear-gradient(135deg, var(--azul) 0%, #1558A0 100%);
+    padding: 2.5rem 2rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content:'';
+    position:absolute; top:-60px; right:-60px;
+    width:220px; height:220px; border-radius:50%;
+    background:rgba(255,255,255,.06);
+  }
+  .hero::after {
+    content:'';
+    position:absolute; bottom:-40px; left:-40px;
+    width:160px; height:160px; border-radius:50%;
+    background:rgba(255,255,255,.05);
+  }
+  .hero-badge {
+    display:inline-flex; align-items:center; gap:.4rem;
+    background:rgba(255,255,255,.15);
+    border:1px solid rgba(255,255,255,.3);
+    border-radius:50px; padding:.35rem 1rem;
+    font-size:.8rem; font-weight:700;
+    color:rgba(255,255,255,.9); letter-spacing:.08em;
+    text-transform:uppercase; margin-bottom:1rem;
+  }
+  .hero h1 {
+    font-size:clamp(1.8rem,4vw,2.8rem);
+    font-weight:900; color:#fff;
+    line-height:1.15; margin-bottom:.6rem;
+  }
+  .hero h1 span { color:#FDE68A; }
+  .hero p {
+    font-size:clamp(.95rem,1.8vw,1.15rem);
+    color:rgba(255,255,255,.75); max-width:600px; margin:0 auto 1.5rem;
+  }
+  .hero-stats {
+    display:flex; gap:1.5rem; justify-content:center; flex-wrap:wrap;
+  }
+  .stat {
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.2);
+    border-radius:14px; padding:.5rem 1.2rem;
+    text-align:center;
+  }
+  .stat-num { font-size:1.5rem; font-weight:900; color:#FDE68A; line-height:1; }
+  .stat-lbl { font-size:.72rem; color:rgba(255,255,255,.7); text-transform:uppercase; letter-spacing:.08em; }
+
+  /* ── TABS ── */
+  .tabs-wrap {
+    background:#fff;
+    border-bottom:2px solid var(--border);
+    position:sticky; top:0; z-index:100;
+    box-shadow:0 2px 12px rgba(0,0,0,.06);
+  }
+  .tabs {
+    display:flex; max-width:1200px; margin:0 auto;
+    padding:0 1.5rem;
+  }
+  .tab {
+    padding:1rem 1.6rem;
+    font-size:1rem; font-weight:800;
+    color:var(--gray); cursor:pointer;
+    border-bottom:3px solid transparent;
+    transition:all .2s; white-space:nowrap;
+    display:flex; align-items:center; gap:.4rem;
+  }
+  .tab:hover { color:var(--azul); }
+  .tab.ativa { color:var(--azul); border-bottom-color:var(--azul); }
+  .tab-count {
+    background:var(--azulL); color:var(--azul);
+    border-radius:50px; padding:.1rem .5rem;
+    font-size:.72rem; font-weight:900;
+  }
+  .tab.ativa .tab-count { background:var(--azul); color:#fff; }
+
+  /* ── MAIN ── */
+  .main { max-width:1200px; margin:0 auto; padding:2rem 1.5rem 3rem; }
+
+  .secao { display:none; }
+  .secao.ativa { display:block; }
+
+  /* Filtro por matéria */
+  .filtros {
+    display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1.8rem;
+    align-items:center;
+  }
+  .filtro-label {
+    font-size:.8rem; font-weight:700; color:var(--gray);
+    text-transform:uppercase; letter-spacing:.08em; margin-right:.3rem;
+  }
+  .btn-filtro {
+    padding:.35rem .9rem; border-radius:50px;
+    border:1.5px solid var(--border);
+    background:#fff; color:var(--gray);
+    font-family:'Nunito',sans-serif;
+    font-size:.82rem; font-weight:700;
+    cursor:pointer; transition:all .2s;
+  }
+  .btn-filtro:hover { border-color:var(--azul); color:var(--azul); }
+  .btn-filtro.ativo { background:var(--azul); border-color:var(--azul); color:#fff; }
+
+  /* Grid de cards */
+  .grid {
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap:1.2rem;
+  }
+
+  /* Card */
+  .card {
+    background:#fff;
+    border-radius:20px;
+    border:1.5px solid var(--border);
+    box-shadow:0 2px 8px rgba(0,0,0,.05);
+    overflow:hidden;
+    transition:transform .2s, box-shadow .2s;
+    cursor:pointer;
+    text-decoration:none;
+    display:flex; flex-direction:column;
+  }
+  .card:hover {
+    transform:translateY(-4px);
+    box-shadow:0 12px 32px rgba(0,0,0,.12);
+  }
+  .card:active { transform:translateY(-1px); }
+
+  .card-top {
+    padding:1.2rem 1.2rem .8rem;
+    display:flex; align-items:flex-start; gap:.8rem;
+  }
+  .card-icon {
+    width:48px; height:48px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.5rem; flex-shrink:0;
+  }
+  .card-meta { flex:1; }
+  .card-titulo {
+    font-size:1rem; font-weight:900; color:var(--slate);
+    line-height:1.2; margin-bottom:.25rem;
+  }
+  .card-materia {
+    display:inline-flex; align-items:center;
+    padding:.15rem .6rem; border-radius:50px;
+    font-size:.7rem; font-weight:800;
+    letter-spacing:.04em; text-transform:uppercase;
+  }
+  .card-body {
+    padding:0 1.2rem .8rem;
+    font-size:.88rem; color:var(--gray);
+    line-height:1.55; flex:1;
+  }
+  .card-footer {
+    padding:.8rem 1.2rem;
+    border-top:1.5px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+    gap:.5rem;
+  }
+  .card-url {
+    font-size:.78rem; color:var(--gray);
+    font-weight:700; overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap;
+  }
+  .btn-acessar {
+    display:inline-flex; align-items:center; gap:.3rem;
+    padding:.35rem .9rem; border-radius:50px;
+    font-size:.78rem; font-weight:800;
+    color:#fff; white-space:nowrap;
+    flex-shrink:0;
+  }
+
+  /* Tags adicionais */
+  .card-tags {
+    padding:0 1.2rem .6rem;
+    display:flex; gap:.4rem; flex-wrap:wrap;
+  }
+  .tag {
+    padding:.15rem .55rem; border-radius:50px;
+    font-size:.68rem; font-weight:700;
+    background:var(--grayL); color:var(--gray);
+    border:1px solid var(--border);
+  }
+
+  /* Destaque */
+  .card.destaque { border-color: #FDE68A; }
+  .destaque-badge {
+    position:absolute; top:12px; right:12px;
+    background:#FDE68A; color:#92400E;
+    font-size:.65rem; font-weight:900;
+    padding:.15rem .5rem; border-radius:50px;
+    text-transform:uppercase; letter-spacing:.06em;
+  }
+  .card-wrap { position:relative; }
+
+  /* Seção título */
+  .secao-titulo {
+    display:flex; align-items:center; gap:.8rem;
+    margin-bottom:1.4rem;
+  }
+  .secao-emoji { font-size:2rem; }
+  .secao-txt h2 { font-size:1.5rem; font-weight:900; color:var(--slate); }
+  .secao-txt p { font-size:.9rem; color:var(--gray); margin-top:.1rem; }
+
+  /* Cores por matéria */
+  .mat-portugues   { background:#EFF6FF; color:#1D4ED8; }
+  .mat-matematica  { background:#FFF7ED; color:#C2410C; }
+  .mat-ciencias    { background:#F0FDF4; color:#166534; }
+  .mat-historia    { background:#FDF4FF; color:#7E22CE; }
+  .mat-geografia   { background:#ECFDF5; color:#065F46; }
+  .mat-artes       { background:#FFF0F5; color:#9D174D; }
+  .mat-geral       { background:#F8FAFC; color:#334155; }
+  .mat-ingles      { background:#EFF6FF; color:#1E40AF; }
+
+  .ic-portugues    { background:#EFF6FF; }
+  .ic-matematica   { background:#FFF7ED; }
+  .ic-ciencias     { background:#F0FDF4; }
+  .ic-historia     { background:#FDF4FF; }
+  .ic-geografia    { background:#ECFDF5; }
+  .ic-artes        { background:#FFF0F5; }
+  .ic-geral        { background:#F8FAFC; }
+
+  .btn-portugues   { background:#2563EB; }
+  .btn-matematica  { background:#EA580C; }
+  .btn-ciencias    { background:#16A34A; }
+  .btn-historia    { background:#7C3AED; }
+  .btn-geografia   { background:#0D9488; }
+  .btn-artes       { background:#DB2777; }
+  .btn-geral       { background:#334155; }
+  .btn-ingles      { background:#1D4ED8; }
+
+  /* Footer */
+  .page-footer {
+    text-align:center; padding:2rem;
+    font-size:.85rem; color:var(--gray);
+    border-top:1.5px solid var(--border);
+    background:#fff;
+  }
+  .page-footer strong { color:var(--azul); }
+
+  /* Responsivo touch */
+  @media (max-width:600px) {
+    .hero { padding:1.5rem 1rem 1.5rem; }
+    .main { padding:1.2rem 1rem 2rem; }
+    .grid { grid-template-columns:1fr; }
+    .tab { padding:.8rem 1rem; font-size:.88rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">🎓 Recursos Gratuitos para Professores</div>
+  <h1>Curadoria de Sites<br><span>Educacionais Interativos</span></h1>
+  <p>Sites gratuitos para usar diretamente na lousa com os alunos. Toque no card para abrir o site.</p>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">40+</div><div class="stat-lbl">Sites</div></div>
+    <div class="stat"><div class="stat-num">100%</div><div class="stat-lbl">Gratuitos</div></div>
+    <div class="stat"><div class="stat-num">F1 + F2</div><div class="stat-lbl">Séries</div></div>
+    <div class="stat"><div class="stat-num">8</div><div class="stat-lbl">Matérias</div></div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-wrap">
+  <div class="tabs">
+    <div class="tab ativa" onclick="mudarTab('f1',this)">🌟 Fundamental 1 <span class="tab-count">22</span></div>
+    <div class="tab" onclick="mudarTab('f2',this)">🚀 Fundamental 2 <span class="tab-count">22</span></div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ══════════════════════ FUNDAMENTAL 1 ══════════════════════ -->
+<div class="secao ativa" id="secao-f1">
+  <div class="secao-titulo">
+    <div class="secao-emoji">🌟</div>
+    <div class="secao-txt">
+      <h2>Ensino Fundamental 1</h2>
+      <p>1º ao 5º ano — sites com linguagem visual, interativos e fáceis de usar na lousa touch</p>
+    </div>
+  </div>
+
+  <div class="filtros">
+    <span class="filtro-label">Filtrar:</span>
+    <button class="btn-filtro ativo" onclick="filtrar('f1','todos',this)">Todos</button>
+    <button class="btn-filtro" onclick="filtrar('f1','portugues',this)">Português</button>
+    <button class="btn-filtro" onclick="filtrar('f1','matematica',this)">Matemática</button>
+    <button class="btn-filtro" onclick="filtrar('f1','ciencias',this)">Ciências</button>
+    <button class="btn-filtro" onclick="filtrar('f1','historia',this)">História</button>
+    <button class="btn-filtro" onclick="filtrar('f1','geografia',this)">Geografia</button>
+    <button class="btn-filtro" onclick="filtrar('f1','artes',this)">Artes</button>
+    <button class="btn-filtro" onclick="filtrar('f1','geral',this)">Geral</button>
+  </div>
+
+  <div class="grid" id="grid-f1">
+
+    <!-- PORTUGUÊS -->
+    <div class="card-wrap" data-mat="portugues">
+    <a class="card" href="https://www.escolagames.com.br" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-portugues">📚</div>
+        <div class="card-meta">
+          <div class="card-titulo">Escola Games</div>
+          <span class="card-materia mat-portugues">Português · Matemática</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Alfabetização</span><span class="tag">Sílabas</span><span class="tag">Touch</span></div>
+      <div class="card-body">Jogos de sílabas, letras e palavras. O aluno arrasta sílabas com o dedo para formar palavras. Ideal para 1º e 2º ano.</div>
+      <div class="card-footer">
+        <span class="card-url">escolagames.com.br</span>
+        <span class="btn-acessar btn-portugues">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="portugues">
+    <a class="card" href="https://www.atividadeseducativas.com.br" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-portugues">✏️</div>
+        <div class="card-meta">
+          <div class="card-titulo">Atividades Educativas</div>
+          <span class="card-materia mat-portugues">Português</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Ditado</span><span class="tag">Leitura</span><span class="tag">Ortografia</span></div>
+      <div class="card-body">Atividades interativas de português: ditado, leitura, complete a frase. Funciona no navegador e responde bem ao touch.</div>
+      <div class="card-footer">
+        <span class="card-url">atividadeseducativas.com.br</span>
+        <span class="btn-acessar btn-portugues">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="portugues">
+    <a class="card" href="https://www.contaoutra.com.br" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-portugues">📖</div>
+        <div class="card-meta">
+          <div class="card-titulo">Conta Outra Vez</div>
+          <span class="card-materia mat-portugues">Português · Literatura</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Histórias</span><span class="tag">Animação</span><span class="tag">F1</span></div>
+      <div class="card-body">Histórias infantis interativas animadas em português. Ótimo para trabalhar leitura e interpretação com toda a turma na lousa.</div>
+      <div class="card-footer">
+        <span class="card-url">contaoutra.com.br</span>
+        <span class="btn-acessar btn-portugues">Abrir →</span>
+      </div>
+    </a></div>
+
+    <!-- MATEMÁTICA -->
+    <div class="card-wrap" data-mat="matematica">
+    <a class="card" href="https://pt.khanacademy.org" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-matematica">🔢</div>
+        <div class="card-meta">
+          <div class="card-titulo">Khan Academy</div>
+          <span class="card-materia mat-matematica">Matemática · Geral</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Exercícios</span><span class="tag">Vídeos</span><span class="tag">Progresso</span></div>
+      <div class="card-body">Videoaulas e exercícios interativos do 1º ao 5º ano. Um aluno resolve na lousa enquanto a turma acompanha e discute.</div>
+      <div class="card-footer">
+        <span class="card-url">pt.khanacademy.org</span>
+        <span class="btn-acessar btn-matematica">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="matematica">
+    <a class="card" href="https://www.tabuada.ws" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-matematica">✖️</div>
+        <div class="card-meta">
+          <div class="card-titulo">Tabuada.ws</div>
+          <span class="card-materia mat-matematica">Matemática</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Tabuada</span><span class="tag">Timer</span><span class="tag">Competição</span></div>
+      <div class="card-body">Treino de tabuada com timer e ranking. Ótimo para desafio entre alunos — um por vez vai à lousa tentar bater o recorde da turma.</div>
+      <div class="card-footer">
+        <span class="card-url">tabuada.ws</span>
+        <span class="btn-acessar btn-matematica">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="matematica">
+    <a class="card" href="https://www.geogebra.org/calculator" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-matematica">📐</div>
+        <div class="card-meta">
+          <div class="card-titulo">GeoGebra</div>
+          <span class="card-materia mat-matematica">Matemática · Geometria</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Geometria</span><span class="tag">Gráficos</span><span class="tag">Touch</span></div>
+      <div class="card-body">Desenhe figuras geométricas interativas. Alunos vão à lousa medir, mover e explorar formas com o dedo. Em português.</div>
+      <div class="card-footer">
+        <span class="card-url">geogebra.org/calculator</span>
+        <span class="btn-acessar btn-matematica">Abrir →</span>
+      </div>
+    </a></div>
+
+    <!-- CIÊNCIAS -->
+    <div class="card-wrap" data-mat="ciencias">
+    <a class="card" href="https://stellarium-web.org" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-ciencias">🌌</div>
+        <div class="card-meta">
+          <div class="card-titulo">Stellarium Web</div>
+          <span class="card-materia mat-ciencias">Ciências · Astronomia</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Planetas</span><span class="tag">Constelações</span><span class="tag">Tempo real</span></div>
+      <div class="card-body">Planetário virtual em tempo real. Alunos giram o céu com o dedo, encontram planetas e constelações diretamente na lousa.</div>
+      <div class="card-footer">
+        <span class="card-url">stellarium-web.org</span>
+        <span class="btn-acessar btn-ciencias">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="ciencias">
+    <a class="card" href="https://www.anatomia.med.br" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-ciencias">🫀</div>
+        <div class="card-meta">
+          <div class="card-titulo">Anatomia Online</div>
+          <span class="card-materia mat-ciencias">Ciências · Biologia</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Corpo Humano</span><span class="tag">Português</span><span class="tag">Sistemas</span></div>
+      <div class="card-body">Imagens do corpo humano com legendas em português. Alunos identificam órgãos escrevendo em cima com a caneta flutuante da lousa.</div>
+      <div class="card-footer">
+        <span class="card-url">anatomia.med.br</span>
+        <span class="btn-acessar btn-ciencias">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="ciencias">
+    <a class="card" href="https://www.arvoresdobrasil.com.br" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-ciencias">🌿</div>
+        <div class="card-meta">
+          <div class="card-titulo">Árvores do Brasil</div>
+          <span class="card-materia mat-ciencias">Ciências · Meio Ambiente</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Natureza</span><span class="tag">Biomas</span><span class="tag">Português</span></div>
+      <div class="card-body">Catálogo visual de árvores nativas do Brasil com fotos e descrições. Ótimo para trabalhar biomas, natureza e meio ambiente.</div>
+      <div class="card-footer">
+        <span class="card-url">arvoresdobrasil.com.br</span>
+        <span class="btn-acessar btn-ciencias">Abrir →</span>
+      </div>
+    </a></div>
+
+    <!-- HISTÓRIA -->
+    <div class="card-wrap" data-mat="historia">
+    <a class="card" href="https://www.historiadobrasil.net" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-historia">🏛️</div>
+        <div class="card-meta">
+          <div class="card-titulo">História do Brasil</div>
+          <span class="card-materia mat-historia">História</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Brasil</span><span class="tag">Linha do tempo</span><span class="tag">Português</span></div>
+      <div class="card-body">Linha do tempo visual e interativa da história do Brasil. Professor mostra na lousa e alunos vão identificar períodos e eventos.</div>
+      <div class="card-footer">
+        <span class="card-url">historiadobrasil.net</span>
+        <span class="btn-acessar btn-historia">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="historia">
+    <a class="card" href="https://artsandculture.google.com" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-historia">🎨</div>
+        <div class="card-meta">
+          <div class="card-titulo">Google Arts & Culture</div>
+          <span class="card-materia mat-historia">História · Artes</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Museus</span><span class="tag">Arte</span><span class="tag">Virtual</span></div>
+      <div class="card-body">Visite museus e monumentos históricos do mundo em 3D. Alunos "caminham" pelo museu na lousa com o dedo. Em português.</div>
+      <div class="card-footer">
+        <span class="card-url">artsandculture.google.com</span>
+        <span class="btn-acessar btn-historia">Abrir →</span>
+      </div>
+    </a></div>
+
+    <!-- GEOGRAFIA -->
+    <div class="card-wrap" data-mat="geografia">
+    <a class="card" href="https://earth.google.com/web" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-geografia">🌍</div>
+        <div class="card-meta">
+          <div class="card-titulo">Google Earth</div>
+          <span class="card-materia mat-geografia">Geografia</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Mapas 3D</span><span class="tag">Satélite</span><span class="tag">Touch</span></div>
+      <div class="card-body">Globo terrestre interativo. Alunos giram o globo, buscam sua cidade e exploram países com o dedo na lousa. Sem instalar nada.</div>
+      <div class="card-footer">
+        <span class="card-url">earth.google.com/web</span>
+        <span class="btn-acessar btn-geografia">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="geografia">
+    <a class="card" href="https://www.setorgeografico.com.br/mapas-do-brasil" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-geografia">🗺️</div>
+        <div class="card-meta">
+          <div class="card-titulo">Setor Geográfico</div>
+          <span class="card-materia mat-geografia">Geografia</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Mapas Brasil</span><span class="tag">Regiões</span><span class="tag">Estados</span></div>
+      <div class="card-body">Mapas do Brasil em alta resolução: regiões, estados, biomas e relevo. Professor projeta e alunos escrevem em cima com a caneta.</div>
+      <div class="card-footer">
+        <span class="card-url">setorgeografico.com.br</span>
+        <span class="btn-acessar btn-geografia">Abrir →</span>
+      </div>
+    </a></div>
+
+    <!-- ARTES -->
+    <div class="card-wrap" data-mat="artes">
+    <a class="card" href="https://www.autodraw.com" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-artes">🖌️</div>
+        <div class="card-meta">
+          <div class="card-titulo">AutoDraw</div>
+          <span class="card-materia mat-artes">Artes</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Desenho</span><span class="tag">IA</span><span class="tag">Touch</span></div>
+      <div class="card-body">Ferramenta de desenho com IA do Google. O aluno desenha com o dedo na lousa e a IA sugere o desenho profissional. Muito divertido!</div>
+      <div class="card-footer">
+        <span class="card-url">autodraw.com</span>
+        <span class="btn-acessar btn-artes">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="artes">
+    <a class="card" href="https://www.incredibox.com" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-artes">🎵</div>
+        <div class="card-meta">
+          <div class="card-titulo">Incredibox</div>
+          <span class="card-materia mat-artes">Artes · Música</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Música</span><span class="tag">Beatbox</span><span class="tag">Criativo</span></div>
+      <div class="card-body">Crie músicas arrastando personagens com o dedo. Alunos compõem batidas coletivamente na lousa. Sem precisar saber música.</div>
+      <div class="card-footer">
+        <span class="card-url">incredibox.com</span>
+        <span class="btn-acessar btn-artes">Abrir →</span>
+      </div>
+    </a></div>
+
+    <!-- GERAL -->
+    <div class="card-wrap" data-mat="geral">
+    <a class="card" href="https://www.wordwall.net" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-geral">🧩</div>
+        <div class="card-meta">
+          <div class="card-titulo">Wordwall</div>
+          <span class="card-materia mat-geral">Qualquer matéria</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Quiz</span><span class="tag">Memória</span><span class="tag">Personalizável</span></div>
+      <div class="card-body">Crie jogos personalizados com o seu conteúdo: quiz, memória, caça-palavras, forca. Alunos jogam tocando na lousa.</div>
+      <div class="card-footer">
+        <span class="card-url">wordwall.net</span>
+        <span class="btn-acessar btn-geral">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="geral">
+    <a class="card" href="https://www.canva.com/education" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-geral">🎨</div>
+        <div class="card-meta">
+          <div class="card-titulo">Canva Educação</div>
+          <span class="card-materia mat-geral">Qualquer matéria</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Apresentações</span><span class="tag">Infográficos</span><span class="tag">Grátis</span></div>
+      <div class="card-body">Crie apresentações visuais ricas com os alunos em tempo real na lousa. Versão educação é 100% gratuita com recursos premium.</div>
+      <div class="card-footer">
+        <span class="card-url">canva.com/education</span>
+        <span class="btn-acessar btn-geral">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="geral">
+    <a class="card" href="https://www.mentimeter.com" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-geral">📊</div>
+        <div class="card-meta">
+          <div class="card-titulo">Mentimeter</div>
+          <span class="card-materia mat-geral">Qualquer matéria</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Votação</span><span class="tag">Nuvem de palavras</span><span class="tag">Interativo</span></div>
+      <div class="card-body">Alunos respondem pelo celular e as respostas aparecem em tempo real na lousa. Votações, nuvens de palavras e quizzes ao vivo.</div>
+      <div class="card-footer">
+        <span class="card-url">mentimeter.com</span>
+        <span class="btn-acessar btn-geral">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="geral">
+    <a class="card" href="https://view.genially.com" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-geral">✨</div>
+        <div class="card-meta">
+          <div class="card-titulo">Genially</div>
+          <span class="card-materia mat-geral">Qualquer matéria</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Apresentações</span><span class="tag">Animado</span><span class="tag">Interativo</span></div>
+      <div class="card-body">Apresentações animadas e interativas que funcionam direto no navegador. Muito mais dinâmico que PowerPoint. Versão gratuita generosa.</div>
+      <div class="card-footer">
+        <span class="card-url">genially.com</span>
+        <span class="btn-acessar btn-geral">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="geral">
+    <a class="card" href="https://www.youtube.com/education" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-geral">▶️</div>
+        <div class="card-meta">
+          <div class="card-titulo">YouTube Educação</div>
+          <span class="card-materia mat-geral">Todas as matérias</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Vídeos</span><span class="tag">Documentários</span><span class="tag">Canais BR</span></div>
+      <div class="card-body">Pause o vídeo na lousa e rabisque em cima com a caneta flutuante. Anote conceitos, circule elementos, faça perguntas sobre o frame.</div>
+      <div class="card-footer">
+        <span class="card-url">youtube.com/education</span>
+        <span class="btn-acessar btn-geral">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="geral">
+    <a class="card" href="https://www.padlet.com" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-geral">📌</div>
+        <div class="card-meta">
+          <div class="card-titulo">Padlet</div>
+          <span class="card-materia mat-geral">Qualquer matéria</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Mural virtual</span><span class="tag">Colaborativo</span><span class="tag">Touch</span></div>
+      <div class="card-body">Mural virtual colaborativo. Alunos colam ideias, fotos e textos que aparecem em tempo real na lousa. Ótimo para tempestade de ideias.</div>
+      <div class="card-footer">
+        <span class="card-url">padlet.com</span>
+        <span class="btn-acessar btn-geral">Abrir →</span>
+      </div>
+    </a></div>
+
+  </div><!-- /grid f1 -->
+</div><!-- /secao f1 -->
+
+<!-- ══════════════════════ FUNDAMENTAL 2 ══════════════════════ -->
+<div class="secao" id="secao-f2">
+  <div class="secao-titulo">
+    <div class="secao-emoji">🚀</div>
+    <div class="secao-txt">
+      <h2>Ensino Fundamental 2</h2>
+      <p>6º ao 9º ano — ferramentas mais completas, simulações e recursos avançados</p>
+    </div>
+  </div>
+
+  <div class="filtros">
+    <span class="filtro-label">Filtrar:</span>
+    <button class="btn-filtro ativo" onclick="filtrar('f2','todos',this)">Todos</button>
+    <button class="btn-filtro" onclick="filtrar('f2','portugues',this)">Português</button>
+    <button class="btn-filtro" onclick="filtrar('f2','matematica',this)">Matemática</button>
+    <button class="btn-filtro" onclick="filtrar('f2','ciencias',this)">Ciências</button>
+    <button class="btn-filtro" onclick="filtrar('f2','historia',this)">História</button>
+    <button class="btn-filtro" onclick="filtrar('f2','geografia',this)">Geografia</button>
+    <button class="btn-filtro" onclick="filtrar('f2','artes',this)">Artes</button>
+    <button class="btn-filtro" onclick="filtrar('f2','ingles',this)">Inglês</button>
+    <button class="btn-filtro" onclick="filtrar('f2','geral',this)">Geral</button>
+  </div>
+
+  <div class="grid" id="grid-f2">
+
+    <!-- PORTUGUÊS -->
+    <div class="card-wrap" data-mat="portugues">
+    <a class="card" href="https://www.recantodasletras.com.br" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-portugues">📝</div>
+        <div class="card-meta">
+          <div class="card-titulo">Recanto das Letras</div>
+          <span class="card-materia mat-portugues">Português · Literatura</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Poesia</span><span class="tag">Crônicas</span><span class="tag">Redação</span></div>
+      <div class="card-body">Acervo de poesias, crônicas e textos literários brasileiros. Professor exibe e alunos analisam juntos na lousa. Em português.</div>
+      <div class="card-footer">
+        <span class="card-url">recantodasletras.com.br</span>
+        <span class="btn-acessar btn-portugues">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="portugues">
+    <a class="card" href="https://www.conjugacao.com.br" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-portugues">🔤</div>
+        <div class="card-meta">
+          <div class="card-titulo">Conjugação</div>
+          <span class="card-materia mat-portugues">Português</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Verbos</span><span class="tag">Conjugação</span><span class="tag">Gramática</span></div>
+      <div class="card-body">Conjugação completa de qualquer verbo português. Aluno digita o verbo na lousa e a turma analisa os tempos verbais juntos.</div>
+      <div class="card-footer">
+        <span class="card-url">conjugacao.com.br</span>
+        <span class="btn-acessar btn-portugues">Abrir →</span>
+      </div>
+    </a></div>
+
+    <!-- MATEMÁTICA -->
+    <div class="card-wrap" data-mat="matematica">
+    <a class="card" href="https://www.geogebra.org" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-matematica">📊</div>
+        <div class="card-meta">
+          <div class="card-titulo">GeoGebra Completo</div>
+          <span class="card-materia mat-matematica">Matemática</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Funções</span><span class="tag">Álgebra</span><span class="tag">Geometria analítica</span></div>
+      <div class="card-body">Versão completa com gráficos de funções, geometria analítica e álgebra. Alunos manipulam variáveis na lousa e veem o impacto no gráfico.</div>
+      <div class="card-footer">
+        <span class="card-url">geogebra.org</span>
+        <span class="btn-acessar btn-matematica">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="matematica">
+    <a class="card" href="https://www.desmos.com/calculator" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-matematica">📈</div>
+        <div class="card-meta">
+          <div class="card-titulo">Desmos</div>
+          <span class="card-materia mat-matematica">Matemática</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Gráficos</span><span class="tag">Funções</span><span class="tag">Visual</span></div>
+      <div class="card-body">Calculadora gráfica online. Digite qualquer função e o gráfico aparece na hora. Alunos manipulam a equação e veem o gráfico mudar em tempo real.</div>
+      <div class="card-footer">
+        <span class="card-url">desmos.com/calculator</span>
+        <span class="btn-acessar btn-matematica">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="matematica">
+    <a class="card" href="https://pt.khanacademy.org" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-matematica">🎓</div>
+        <div class="card-meta">
+          <div class="card-titulo">Khan Academy F2</div>
+          <span class="card-materia mat-matematica">Matemática · Ciências</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Álgebra</span><span class="tag">Geometria</span><span class="tag">Trigonometria</span></div>
+      <div class="card-body">Conteúdo completo do 6º ao 9º ano. Um aluno resolve o exercício na lousa enquanto a turma debate a solução passo a passo.</div>
+      <div class="card-footer">
+        <span class="card-url">pt.khanacademy.org</span>
+        <span class="btn-acessar btn-matematica">Abrir →</span>
+      </div>
+    </a></div>
+
+    <!-- CIÊNCIAS -->
+    <div class="card-wrap" data-mat="ciencias">
+    <a class="card" href="https://phet.colorado.edu/pt_BR" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-ciencias">⚗️</div>
+        <div class="card-meta">
+          <div class="card-titulo">PhET Simulações</div>
+          <span class="card-materia mat-ciencias">Ciências · Física · Química</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Simulações</span><span class="tag">Laboratório virtual</span><span class="tag">Português</span></div>
+      <div class="card-body">Simulações interativas de física, química e biologia da Universidade de Colorado. Em português. Alunos manipulam variáveis na lousa.</div>
+      <div class="card-footer">
+        <span class="card-url">phet.colorado.edu/pt_BR</span>
+        <span class="btn-acessar btn-ciencias">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="ciencias">
+    <a class="card" href="https://www.visiblebody.com/pt" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-ciencias">🧬</div>
+        <div class="card-meta">
+          <div class="card-titulo">Visible Body</div>
+          <span class="card-materia mat-ciencias">Ciências · Biologia</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Corpo 3D</span><span class="tag">Órgãos</span><span class="tag">Sistemas</span></div>
+      <div class="card-body">Modelo 3D do corpo humano que gira com o toque. Alunos identificam sistemas, órgãos e estruturas diretamente na lousa.</div>
+      <div class="card-footer">
+        <span class="card-url">visiblebody.com</span>
+        <span class="btn-acessar btn-ciencias">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="ciencias">
+    <a class="card" href="https://stellarium-web.org" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-ciencias">🔭</div>
+        <div class="card-meta">
+          <div class="card-titulo">Stellarium Web</div>
+          <span class="card-materia mat-ciencias">Ciências · Astronomia</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Planetas</span><span class="tag">Órbitas</span><span class="tag">Tempo real</span></div>
+      <div class="card-body">Planetário virtual com movimentos planetários, eclipses e constelações. Alunos identificam astros e calculam distâncias na lousa.</div>
+      <div class="card-footer">
+        <span class="card-url">stellarium-web.org</span>
+        <span class="btn-acessar btn-ciencias">Abrir →</span>
+      </div>
+    </a></div>
+
+    <!-- HISTÓRIA -->
+    <div class="card-wrap" data-mat="historia">
+    <a class="card" href="https://www.historiadomundo.com.br" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-historia">🌐</div>
+        <div class="card-meta">
+          <div class="card-titulo">História do Mundo</div>
+          <span class="card-materia mat-historia">História</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Geral</span><span class="tag">Artigos</span><span class="tag">Português</span></div>
+      <div class="card-body">Artigos sobre história mundial com linha do tempo visual. Professor projeta e debate com a turma. Conteúdo alinhado ao currículo brasileiro.</div>
+      <div class="card-footer">
+        <span class="card-url">historiadomundo.com.br</span>
+        <span class="btn-acessar btn-historia">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="historia">
+    <a class="card" href="https://artsandculture.google.com" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-historia">🏺</div>
+        <div class="card-meta">
+          <div class="card-titulo">Google Arts & Culture</div>
+          <span class="card-materia mat-historia">História · Arte</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Museus 3D</span><span class="tag">Obras de arte</span><span class="tag">Virtual</span></div>
+      <div class="card-body">Explore museus históricos do mundo em realidade virtual. Tour pelo Louvre, museus egípcios e sítios arqueológicos diretamente na lousa.</div>
+      <div class="card-footer">
+        <span class="card-url">artsandculture.google.com</span>
+        <span class="btn-acessar btn-historia">Abrir →</span>
+      </div>
+    </a></div>
+
+    <!-- GEOGRAFIA -->
+    <div class="card-wrap" data-mat="geografia">
+    <a class="card" href="https://earth.google.com/web" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-geografia">🌍</div>
+        <div class="card-meta">
+          <div class="card-titulo">Google Earth</div>
+          <span class="card-materia mat-geografia">Geografia</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">3D</span><span class="tag">Satélite</span><span class="tag">Biomas</span></div>
+      <div class="card-body">Voe sobre biomas, relevo e regiões do planeta. Alunos traçam rotas, medem distâncias e identificam formações geográficas na lousa.</div>
+      <div class="card-footer">
+        <span class="card-url">earth.google.com/web</span>
+        <span class="btn-acessar btn-geografia">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="geografia">
+    <a class="card" href="https://www.gapminder.org/tools" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-geografia">📉</div>
+        <div class="card-meta">
+          <div class="card-titulo">Gapminder</div>
+          <span class="card-materia mat-geografia">Geografia · Ciências Humanas</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Dados mundiais</span><span class="tag">Gráficos</span><span class="tag">Animado</span></div>
+      <div class="card-body">Visualize dados de países ao longo do tempo em gráficos animados. Renda, expectativa de vida, população. Ótimo para análise crítica.</div>
+      <div class="card-footer">
+        <span class="card-url">gapminder.org/tools</span>
+        <span class="btn-acessar btn-geografia">Abrir →</span>
+      </div>
+    </a></div>
+
+    <!-- INGLÊS -->
+    <div class="card-wrap" data-mat="ingles">
+    <a class="card" href="https://www.duolingo.com" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-geral">🦜</div>
+        <div class="card-meta">
+          <div class="card-titulo">Duolingo</div>
+          <span class="card-materia mat-ingles">Inglês</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Vocabulário</span><span class="tag">Pronúncia</span><span class="tag">Gamificado</span></div>
+      <div class="card-body">Lições gamificadas de inglês. Professor projeta na lousa e a turma decide a resposta juntos. Muito visual e motivador para os alunos.</div>
+      <div class="card-footer">
+        <span class="card-url">duolingo.com</span>
+        <span class="btn-acessar btn-ingles">Abrir →</span>
+      </div>
+    </a></div>
+
+    <!-- ARTES -->
+    <div class="card-wrap" data-mat="artes">
+    <a class="card" href="https://www.incredibox.com" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-artes">🥁</div>
+        <div class="card-meta">
+          <div class="card-titulo">Incredibox</div>
+          <span class="card-materia mat-artes">Artes · Música</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Composição</span><span class="tag">Ritmo</span><span class="tag">Colaborativo</span></div>
+      <div class="card-body">Crie composições musicais arrastando elementos. Vários alunos contribuem tocando a lousa e a música fica mais complexa em tempo real.</div>
+      <div class="card-footer">
+        <span class="card-url">incredibox.com</span>
+        <span class="btn-acessar btn-artes">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="artes">
+    <a class="card" href="https://www.canva.com/education" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-artes">🖼️</div>
+        <div class="card-meta">
+          <div class="card-titulo">Canva Educação</div>
+          <span class="card-materia mat-artes">Artes · Design</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Design</span><span class="tag">Pôsteres</span><span class="tag">Grátis completo</span></div>
+      <div class="card-body">Alunos criam pôsteres, infográficos e apresentações com design profissional. Versão educação tem todos os recursos premium gratuitamente.</div>
+      <div class="card-footer">
+        <span class="card-url">canva.com/education</span>
+        <span class="btn-acessar btn-artes">Abrir →</span>
+      </div>
+    </a></div>
+
+    <!-- GERAL F2 -->
+    <div class="card-wrap" data-mat="geral">
+    <a class="card" href="https://www.mentimeter.com" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-geral">📲</div>
+        <div class="card-meta">
+          <div class="card-titulo">Mentimeter</div>
+          <span class="card-materia mat-geral">Qualquer matéria</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Votação ao vivo</span><span class="tag">Celular</span><span class="tag">Tempo real</span></div>
+      <div class="card-body">Alunos votam pelo celular e as respostas aparecem ao vivo na lousa. Nuvens de palavras, quizzes e enquetes que engajam toda a turma.</div>
+      <div class="card-footer">
+        <span class="card-url">mentimeter.com</span>
+        <span class="btn-acessar btn-geral">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="geral">
+    <a class="card" href="https://www.kahoot.com" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-geral">🎯</div>
+        <div class="card-meta">
+          <div class="card-titulo">Kahoot</div>
+          <span class="card-materia mat-geral">Qualquer matéria</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Quiz competitivo</span><span class="tag">Celular</span><span class="tag">Ranking</span></div>
+      <div class="card-body">Quiz competitivo onde cada aluno responde pelo celular. As perguntas aparecem na lousa e o ranking é exibido em tempo real. Cria euforia na sala!</div>
+      <div class="card-footer">
+        <span class="card-url">kahoot.com</span>
+        <span class="btn-acessar btn-geral">Abrir →</span>
+      </div>
+    </a></div>
+
+    <div class="card-wrap" data-mat="geral">
+    <a class="card" href="https://www.padlet.com" target="_blank">
+      <div class="card-top">
+        <div class="card-icon ic-geral">🗂️</div>
+        <div class="card-meta">
+          <div class="card-titulo">Padlet</div>
+          <span class="card-materia mat-geral">Qualquer matéria</span>
+        </div>
+      </div>
+      <div class="card-tags"><span class="tag">Mural colaborativo</span><span class="tag">Pesquisa</span><span class="tag">Celular + lousa</span></div>
+      <div class="card-body">Alunos postam textos, imagens e links no mural pelo celular e tudo aparece na lousa em tempo real. Ideal para trabalhos colaborativos.</div>
+      <div class="card-footer">
+        <span class="card-url">padlet.com</span>
+        <span class="btn-acessar btn-geral">Abrir →</span>
+      </div>
+    </a></div>
+
+  </div><!-- /grid f2 -->
+</div><!-- /secao f2 -->
+
+</div><!-- /main -->
+
+<div class="page-footer">
+  Curadoria organizada para uso na <strong>Huawei IdeaHub</strong> · Todos os recursos são <strong>100% gratuitos</strong> · Toque nos cards para abrir os sites
+</div>
+
+<script>
+  function mudarTab(secao, tabEl) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('ativa'));
+    document.querySelectorAll('.secao').forEach(s => s.classList.remove('ativa'));
+    tabEl.classList.add('ativa');
+    document.getElementById('secao-' + secao).classList.add('ativa');
+  }
+
+  function filtrar(secao, mat, btnEl) {
+    // Atualiza botões
+    const filtros = btnEl.closest('.filtros');
+    filtros.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('ativo'));
+    btnEl.classList.add('ativo');
+    // Filtra cards
+    const grid = document.getElementById('grid-' + secao);
+    grid.querySelectorAll('.card-wrap').forEach(card => {
+      if (mat === 'todos' || card.dataset.mat === mat) {
+        card.style.display = '';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+</script>
+</body>
+</html>

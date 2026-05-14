@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cores Misturadas</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;user-select:none;}
+body{font-family:'Nunito',sans-serif;background:linear-gradient(135deg,#EC4899,#F97316,#EAB308);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:1vh;}
+.container{position:relative;z-index:10;width:96vw;max-width:1000px;display:flex;flex-direction:column;align-items:center;gap:2vh;}
+.header{display:flex;align-items:center;justify-content:space-between;width:100%;background:rgba(255,255,255,.25);border-radius:20px;padding:.8vh 2vw;border:2px solid rgba(255,255,255,.4);backdrop-filter:blur(10px);}
+.titulo{font-size:clamp(1.4rem,3.5vw,2rem);color:#fff;font-weight:900;text-shadow:0 2px 8px rgba(0,0,0,.15);}
+.score-box{display:flex;gap:1vw;}
+.score-item{background:rgba(255,255,255,.25);border-radius:12px;padding:.3vh 1vw;text-align:center;min-width:70px;}
+.score-label{font-size:.65rem;color:rgba(255,255,255,.85);text-transform:uppercase;}
+.score-num{font-size:clamp(1.2rem,2.5vw,1.7rem);font-weight:900;color:#fff;line-height:1;}
+/* Box da mistura */
+.mistura-box{background:rgba(255,255,255,.95);border-radius:28px;padding:2vh 4vw;width:100%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.15);}
+.mistura-label{font-size:.85rem;color:#888;text-transform:uppercase;letter-spacing:.15em;margin-bottom:1vh;}
+.mistura-paleta{display:flex;align-items:center;justify-content:center;gap:2vw;}
+.cor-blob{
+  width:clamp(80px,14vw,130px);height:clamp(80px,14vw,130px);
+  border-radius:50%;box-shadow:0 6px 20px rgba(0,0,0,.2);
+  transition:transform .2s;
+  border:4px solid rgba(255,255,255,.8);
+}
+.mais{font-size:clamp(2rem,5vw,3.5rem);font-weight:900;color:#888;}
+.igual{font-size:clamp(2rem,5vw,3.5rem);font-weight:900;color:#888;}
+.resultado-blob{
+  width:clamp(90px,16vw,145px);height:clamp(90px,16vw,145px);
+  border-radius:50%;box-shadow:0 8px 28px rgba(0,0,0,.25);
+  border:4px solid rgba(255,255,255,.9);
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(2rem,5vw,3.5rem);
+  animation:pulsaBlob 1.5s ease-in-out infinite;
+  background:#ccc;
+}
+@keyframes pulsaBlob{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.mistura-nomes{display:flex;align-items:center;justify-content:center;gap:2vw;margin-top:1vh;}
+.nome-cor{font-size:clamp(.9rem,2vw,1.3rem);font-weight:900;text-align:center;}
+/* Opções */
+.opcoes-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5vw;width:100%;}
+.btn-cor{
+  border-radius:22px;border:3px solid rgba(255,255,255,.4);
+  padding:2vh 1vw;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:1vh;
+  transition:transform .15s,border-color .15s;
+  box-shadow:0 6px 20px rgba(0,0,0,.15);
+}
+.btn-cor:hover{transform:scale(1.06);}
+.btn-cor:active{transform:scale(.95);}
+.opcao-blob{width:clamp(50px,9vw,90px);height:clamp(50px,9vw,90px);border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,.2);border:3px solid rgba(255,255,255,.7);}
+.opcao-nome{font-size:clamp(.85rem,2vw,1.2rem);font-weight:900;color:#fff;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.2);}
+.btn-cor.acerto{border-color:#fff!important;box-shadow:0 0 30px rgba(255,255,255,.6)!important;animation:pulsaAcerto .5s ease;}
+.btn-cor.erro{animation:shake .35s ease;opacity:.7;}
+@keyframes pulsaAcerto{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+#feedback-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:100;pointer-events:none;display:flex;align-items:center;justify-content:center;}
+.feedback-msg{font-family:'Nunito',sans-serif;font-size:clamp(4rem,14vw,10rem);font-weight:900;animation:feedAnim .8s ease forwards;opacity:0;}
+@keyframes feedAnim{0%{transform:scale(.3);opacity:1}60%{transform:scale(1.2);opacity:1}100%{transform:scale(1.5);opacity:0}}
+.particula{position:fixed;border-radius:50%;pointer-events:none;z-index:99;animation:explode .7s ease forwards;}
+@keyframes explode{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}}
+#tela-fim{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#EC4899,#F97316);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;gap:2vh;}
+#tela-fim.ativa{display:flex;}
+.fim-emoji{font-size:clamp(4rem,12vw,8rem);animation:troFeu .8s cubic-bezier(.175,.885,.32,1.275);}
+@keyframes troFeu{from{transform:scale(0) rotate(-180deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+.fim-titulo{font-size:clamp(2rem,6vw,4rem);font-weight:900;color:#fff;text-align:center;}
+.fim-placar{display:flex;gap:2vw;align-items:center;}
+.fim-card{background:rgba(255,255,255,.25);border-radius:20px;padding:1.5vh 3vw;text-align:center;min-width:110px;}
+.fim-card .num{font-size:clamp(2.5rem,7vw,4.5rem);font-weight:900;color:#fff;line-height:1;}
+.fim-card .lbl{font-size:.8rem;color:rgba(255,255,255,.7);text-transform:uppercase;}
+.btn-reiniciar{background:#fff;border:none;border-radius:18px;padding:1.2vh 4vw;font-family:'Nunito',sans-serif;font-size:clamp(1.2rem,3vw,1.6rem);font-weight:900;color:#EC4899;cursor:pointer;transition:transform .2s;margin-top:1vh;}
+.btn-reiniciar:hover{transform:scale(1.08);}
+</style>
+</head>
+<body>
+<div id="feedback-overlay"></div>
+<div class="container">
+  <div class="header">
+    <div class="titulo">🎨 Qual cor fica?</div>
+    <div class="score-box">
+      <div class="score-item"><span class="score-label">Rodada</span><span class="score-num" id="num-rodada">1/10</span></div>
+      <div class="score-item"><span class="score-label">Acertos</span><span class="score-num" id="num-acertos" style="color:#FDE68A">0</span></div>
+      <div class="score-item"><span class="score-label">Erros</span><span class="score-num" id="num-erros" style="color:#FECACA">0</span></div>
+    </div>
+  </div>
+  <div class="mistura-box">
+    <div class="mistura-label">🎨 Misture as cores e descubra o resultado!</div>
+    <div class="mistura-paleta">
+      <div class="cor-blob" id="blob-a"></div>
+      <div class="mais">+</div>
+      <div class="cor-blob" id="blob-b"></div>
+      <div class="igual">=</div>
+      <div class="resultado-blob" id="blob-result">❓</div>
+    </div>
+    <div class="mistura-nomes">
+      <div class="nome-cor" id="nome-a">—</div>
+      <div style="color:#bbb;font-size:1.2rem">+</div>
+      <div class="nome-cor" id="nome-b">—</div>
+      <div style="color:#bbb;font-size:1.2rem">=</div>
+      <div class="nome-cor" style="color:#aaa">?</div>
+    </div>
+  </div>
+  <div class="opcoes-grid" id="opcoes-grid"></div>
+</div>
+<div id="tela-fim">
+  <div class="fim-emoji">🎨</div>
+  <div class="fim-titulo">Você é um artista!</div>
+  <div class="fim-placar">
+    <div class="fim-card"><div class="num" id="fim-acertos">0</div><div class="lbl">Acertos</div></div>
+    <div style="font-size:2rem;color:rgba(255,255,255,.3)">✦</div>
+    <div class="fim-card"><div class="num" id="fim-erros">0</div><div class="lbl">Erros</div></div>
+  </div>
+  <button class="btn-reiniciar" onclick="reiniciar()">🔄 Jogar de novo!</button>
+</div>
+<script>
+const MISTURAS=[
+  {a:{nome:"Vermelho",hex:"#EF4444"},b:{nome:"Azul",hex:"#3B82F6"},resultado:{nome:"Roxo",hex:"#8B5CF6"}},
+  {a:{nome:"Vermelho",hex:"#EF4444"},b:{nome:"Amarelo",hex:"#EAB308"},resultado:{nome:"Laranja",hex:"#F97316"}},
+  {a:{nome:"Azul",hex:"#3B82F6"},b:{nome:"Amarelo",hex:"#EAB308"},resultado:{nome:"Verde",hex:"#22C55E"}},
+  {a:{nome:"Vermelho",hex:"#EF4444"},b:{nome:"Branco",hex:"#F3F4F6"},resultado:{nome:"Rosa",hex:"#EC4899"}},
+  {a:{nome:"Azul",hex:"#3B82F6"},b:{nome:"Verde",hex:"#22C55E"},resultado:{nome:"Verde-azulado",hex:"#0D9488"}},
+  {a:{nome:"Amarelo",hex:"#EAB308"},b:{nome:"Verde",hex:"#22C55E"},resultado:{nome:"Verde-limão",hex:"#84CC16"}},
+  {a:{nome:"Vermelho",hex:"#EF4444"},b:{nome:"Verde",hex:"#22C55E"},resultado:{nome:"Marrom",hex:"#78350F"}},
+  {a:{nome:"Azul",hex:"#3B82F6"},b:{nome:"Branco",hex:"#F3F4F6"},resultado:{nome:"Azul-claro",hex:"#93C5FD"}},
+  {a:{nome:"Preto",hex:"#1F2937"},b:{nome:"Branco",hex:"#F3F4F6"},resultado:{nome:"Cinza",hex:"#6B7280"}},
+  {a:{nome:"Laranja",hex:"#F97316"},b:{nome:"Azul",hex:"#3B82F6"},resultado:{nome:"Marrom",hex:"#78350F"}},
+];
+
+const TODASASCORES=[
+  {nome:"Roxo",hex:"#8B5CF6"},{nome:"Laranja",hex:"#F97316"},{nome:"Verde",hex:"#22C55E"},
+  {nome:"Rosa",hex:"#EC4899"},{nome:"Verde-azulado",hex:"#0D9488"},{nome:"Verde-limão",hex:"#84CC16"},
+  {nome:"Marrom",hex:"#78350F"},{nome:"Azul-claro",hex:"#93C5FD"},{nome:"Cinza",hex:"#6B7280"},
+  {nome:"Amarelo",hex:"#EAB308"},{nome:"Vermelho",hex:"#EF4444"},{nome:"Azul",hex:"#3B82F6"},
+];
+
+let estado={rodada:0,acertos:0,erros:0,bloqueado:false,perguntas:[]};
+
+function embaralhar(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function iniciar(){
+  estado={rodada:0,acertos:0,erros:0,bloqueado:false,perguntas:embaralhar([...MISTURAS])};
+  document.getElementById('tela-fim').classList.remove('ativa');
+  proximaRodada();
+}
+
+function proximaRodada(){
+  if(estado.rodada>=estado.perguntas.length){terminar();return;}
+  estado.bloqueado=false;
+  const q=estado.perguntas[estado.rodada];
+  estado.rodada++;
+  document.getElementById('num-rodada').textContent=`${estado.rodada}/${estado.perguntas.length}`;
+  document.getElementById('blob-a').style.background=q.a.hex;
+  document.getElementById('blob-b').style.background=q.b.hex;
+  document.getElementById('blob-result').textContent='❓';
+  document.getElementById('blob-result').style.background='#E5E7EB';
+  document.getElementById('nome-a').textContent=q.a.nome;
+  document.getElementById('nome-a').style.color=q.a.hex;
+  document.getElementById('nome-b').textContent=q.b.nome;
+  document.getElementById('nome-b').style.color=q.b.hex;
+  renderOpcoes(q);
+}
+
+function gerarOpcoes(correto){
+  const outras=TODASASCORES.filter(c=>c.nome!==correto.nome);
+  const selecionadas=embaralhar(outras).slice(0,3);
+  return embaralhar([correto,...selecionadas]);
+}
+
+function renderOpcoes(q){
+  const grid=document.getElementById('opcoes-grid');
+  grid.innerHTML='';
+  gerarOpcoes(q.resultado).forEach(op=>{
+    const btn=document.createElement('div');
+    btn.className='btn-cor';
+    btn.style.background=op.hex+'CC';
+    btn.innerHTML=`<div class="opcao-blob" style="background:${op.hex}"></div><div class="opcao-nome">${op.nome}</div>`;
+    btn.addEventListener('click',()=>responder(op,q,btn));
+    grid.appendChild(btn);
+  });
+}
+
+function responder(opcao,q,btn){
+  if(estado.bloqueado)return;
+  estado.bloqueado=true;
+  document.getElementById('blob-result').textContent='';
+  document.getElementById('blob-result').style.background=q.resultado.hex;
+  if(opcao.nome===q.resultado.nome){
+    btn.classList.add('acerto');
+    estado.acertos++;
+    document.getElementById('num-acertos').textContent=estado.acertos;
+    mostrarFeedback('🎨','#FFD700');
+    explodir(btn,q.resultado.hex);
+  } else {
+    btn.classList.add('erro');
+    estado.erros++;
+    document.getElementById('num-erros').textContent=estado.erros;
+    mostrarFeedback('❌','#FCA5A5');
+    // Mostra correto
+    document.querySelectorAll('.btn-cor').forEach(b=>{
+      if(b.querySelector('.opcao-nome').textContent===q.resultado.nome)b.classList.add('acerto');
+    });
+  }
+  setTimeout(proximaRodada,1300);
+}
+
+function mostrarFeedback(txt,cor){
+  const el=document.createElement('div');el.className='feedback-msg';el.textContent=txt;el.style.color=cor;
+  document.getElementById('feedback-overlay').appendChild(el);
+  setTimeout(()=>el.remove(),900);
+}
+
+function explodir(el,cor){
+  const rect=el.getBoundingClientRect();
+  const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+  for(let i=0;i<12;i++){
+    const p=document.createElement('div');p.className='particula';
+    const ang=(Math.PI*2*i)/12,dist=60+Math.random()*80,sz=8+Math.random()*8;
+    p.style.cssText=`left:${cx}px;top:${cy}px;width:${sz}px;height:${sz}px;background:${cor};--dx:${Math.cos(ang)*dist}px;--dy:${Math.sin(ang)*dist}px;animation-duration:${.5+Math.random()*.4}s;`;
+    document.body.appendChild(p);setTimeout(()=>p.remove(),1000);
+  }
+}
+
+function terminar(){
+  document.getElementById('fim-acertos').textContent=estado.acertos;
+  document.getElementById('fim-erros').textContent=estado.erros;
+  document.getElementById('tela-fim').classList.add('ativa');
+  for(let i=0;i<40;i++){setTimeout(()=>{
+    const p=document.createElement('div');p.className='particula';
+    const cores=['#EF4444','#3B82F6','#EAB308','#22C55E','#EC4899','#8B5CF6'];
+    const sz=8+Math.random()*10;
+    p.style.cssText=`left:${Math.random()*100}vw;top:${Math.random()*30}vh;width:${sz}px;height:${sz}px;background:${cores[Math.floor(Math.random()*cores.length)]};border-radius:${Math.random()>.5?'50%':'3px'};--dx:${(Math.random()-.5)*200}px;--dy:${80+Math.random()*200}px;animation-duration:${1+Math.random()}s;`;
+    document.body.appendChild(p);setTimeout(()=>p.remove(),2000);
+  },i*55);}
+}
+function reiniciar(){iniciar();}
+iniciar();
+</script>
+</body>
+</html>

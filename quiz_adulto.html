@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz — Violência Digital contra Mulheres</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #fff7fb;
+      --panel: #ffffff;
+      --text: #251b2f;
+      --muted: #6b5a76;
+      --primary: #a21caf;
+      --primary-2: #7e22ce;
+      --border: #eadcf1;
+      --correct-bg: #ecfdf3;
+      --correct-bd: #22c55e;
+      --wrong-bg: #fef2f2;
+      --wrong-bd: #ef4444;
+      --option: #faf5ff;
+      --option-hover: #f3e8ff;
+      --shadow: 0 18px 40px rgba(83, 35, 92, 0.12);
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at top left, #fde7f3 0%, transparent 30%),
+        radial-gradient(circle at top right, #ede9fe 0%, transparent 28%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(980px, 100%);
+      min-height: min(92vh, 820px);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .screen {
+      display: none;
+      flex: 1;
+      padding: 32px;
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .start,
+    .result {
+      align-items: center;
+      text-align: center;
+      gap: 20px;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: #f3e8ff;
+      color: var(--primary-2);
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      line-height: 1.1;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      line-height: 1.15;
+    }
+
+    p {
+      margin: 0;
+      font-size: clamp(1rem, 1.6vw, 1.2rem);
+      line-height: 1.6;
+      color: var(--muted);
+      max-width: 760px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 18px;
+      padding: 16px 24px;
+      min-height: 62px;
+      cursor: pointer;
+      font-size: 1.08rem;
+      font-weight: 700;
+      transition: transform 0.12s ease, opacity 0.2s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      color: #fff;
+      min-width: 220px;
+    }
+
+    .btn-secondary {
+      background: #f3e8ff;
+      color: var(--primary-2);
+    }
+
+    .quiz-header {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 16px;
+      background: #f3e8ff;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--primary), var(--primary-2));
+      transition: width 0.3s ease;
+    }
+
+    .stat {
+      white-space: nowrap;
+      background: #faf5ff;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-weight: 700;
+      color: var(--primary-2);
+    }
+
+    .quiz-body {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .question {
+      font-size: clamp(1.45rem, 2.4vw, 2.15rem);
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .option {
+      width: 100%;
+      text-align: left;
+      border: 2px solid var(--border);
+      background: var(--option);
+      color: var(--text);
+      border-radius: 22px;
+      padding: 20px 22px;
+      min-height: 92px;
+      cursor: pointer;
+      font-size: clamp(1rem, 1.6vw, 1.18rem);
+      font-weight: 700;
+      line-height: 1.35;
+      transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+    }
+
+    .option:hover {
+      background: var(--option-hover);
+      transform: translateY(-1px);
+    }
+
+    .option .letter {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      margin-right: 12px;
+      background: #ede9fe;
+      color: var(--primary-2);
+      font-weight: 900;
+    }
+
+    .option.correct {
+      background: var(--correct-bg);
+      border-color: var(--correct-bd);
+    }
+
+    .option.wrong {
+      background: var(--wrong-bg);
+      border-color: var(--wrong-bd);
+    }
+
+    .option.disabled {
+      opacity: 0.72;
+    }
+
+    .feedback {
+      display: none;
+      border-radius: 20px;
+      padding: 18px 20px;
+      font-size: 1.08rem;
+      line-height: 1.55;
+      border: 2px solid transparent;
+    }
+
+    .feedback.show { display: block; }
+    .feedback.correct { background: var(--correct-bg); border-color: #86efac; }
+    .feedback.wrong { background: var(--wrong-bg); border-color: #fca5a5; }
+
+    .feedback strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--text);
+      font-size: 1.08rem;
+    }
+
+    .quiz-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .score-big {
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      font-weight: 900;
+      line-height: 1;
+      color: var(--primary-2);
+    }
+
+    .summary {
+      width: 100%;
+      display: grid;
+      gap: 12px;
+      margin-top: 8px;
+      text-align: left;
+    }
+
+    .summary-item {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px 16px;
+      background: #fcfaff;
+      font-size: 0.98rem;
+      line-height: 1.5;
+    }
+
+    .summary-item b { color: var(--text); }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    @media (max-width: 760px) {
+      body { padding: 12px; }
+      .app { min-height: 100vh; border-radius: 0; }
+      .screen { padding: 20px; }
+      .quiz-header { grid-template-columns: 1fr; }
+      .options { grid-template-columns: 1fr; }
+      .quiz-footer { justify-content: center; }
+      .hint { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section id="startScreen" class="screen start active">
+      <span class="tag">Quiz interativo</span>
+      <h1>Violência Digital contra Mulheres</h1>
+      <p>
+        Responda às perguntas, veja a correção na hora, acompanhe sua pontuação e avance até o resultado final.
+      </p>
+      <button id="startBtn" class="btn btn-primary">Iniciar quiz</button>
+    </section>
+
+    <section id="quizScreen" class="screen">
+      <div class="quiz-header">
+        <div class="progress-track">
+          <div id="progressBar" class="progress-bar"></div>
+        </div>
+        <div id="questionCount" class="stat">Pergunta 1/6</div>
+        <div id="scoreCount" class="stat">Pontos: 0</div>
+      </div>
+
+      <div class="quiz-body">
+        <div id="questionText" class="question"></div>
+        <div id="options" class="options"></div>
+        <div id="feedback" class="feedback"></div>
+      </div>
+
+      <div class="quiz-footer">
+        <div class="hint">Escolha uma alternativa para revelar a resposta.</div>
+        <button id="nextBtn" class="btn btn-primary" style="display:none;">Avançar</button>
+      </div>
+    </section>
+
+    <section id="resultScreen" class="screen result">
+      <span class="tag">Resultado final</span>
+      <h2>Quiz concluído</h2>
+      <div id="finalScore" class="score-big">0/6</div>
+      <p id="finalText"></p>
+      <div id="summary" class="summary"></div>
+      <div class="actions">
+        <button id="restartBtn" class="btn btn-primary">Refazer quiz</button>
+        <button id="homeBtn" class="btn btn-secondary">Tela inicial</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        question: '1) Em 2025, quantas brasileiras sofreram violência digital, segundo o DataSenado?',
+        options: ['5,4 milhões', '6,9 milhões', '8,8 milhões', '11,2 milhões'],
+        answer: 2,
+        explanation: 'Resposta certa: C. 8,8 milhões.'
+      },
+      {
+        question: '2) Segundo o UNICEF, quantas crianças e adolescentes de 12 a 17 anos no Brasil sofreram violência sexual online em um ano?',
+        options: ['1 milhão', '2 milhões', '3 milhões', '4 milhões'],
+        answer: 2,
+        explanation: 'Resposta certa: C. 3 milhões.'
+      },
+      {
+        question: '3) No Brasil, qual foi a forma de violência digital mais citada no DataSenado 2025?',
+        options: ['Perfil falso', 'Mensagens ofensivas', 'Vazamento íntimo', 'Golpe financeiro'],
+        answer: 1,
+        explanation: 'Resposta certa: B. Mensagens ofensivas.'
+      },
+      {
+        question: '4) Em 2024, qual canal do Ligue 180 teve salto de 63,4%?',
+        options: ['E-mail', 'Telefone', 'App', 'WhatsApp'],
+        answer: 3,
+        explanation: 'Resposta certa: D. WhatsApp.'
+      },
+      {
+        question: '5) Em pesquisa citada pelo InternetLab e pela Plan International, quantas meninas e jovens mulheres no Brasil disseram já ter sofrido assédio online?',
+        options: ['58%', '63%', '71%', '77%'],
+        answer: 3,
+        explanation: 'Resposta certa: D. 77%.'
+      },
+      {
+        question: '6) Segundo o Sebrae, qual percentual do faturamento do e-commerce no Brasil é gerado por mulheres?',
+        options: ['75%', '65%', '45%', '35%'],
+        answer: 0,
+        explanation: 'Resposta certa: A. 75%.'
+      }
+    ];
+
+    const letters = ['A', 'B', 'C', 'D'];
+    let current = 0;
+    let score = 0;
+    let locked = false;
+    let history = [];
+
+    const startScreen = document.getElementById('startScreen');
+    const quizScreen = document.getElementById('quizScreen');
+    const resultScreen = document.getElementById('resultScreen');
+    const startBtn = document.getElementById('startBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const homeBtn = document.getElementById('homeBtn');
+    const questionText = document.getElementById('questionText');
+    const optionsEl = document.getElementById('options');
+    const feedbackEl = document.getElementById('feedback');
+    const progressBar = document.getElementById('progressBar');
+    const questionCount = document.getElementById('questionCount');
+    const scoreCount = document.getElementById('scoreCount');
+    const finalScore = document.getElementById('finalScore');
+    const finalText = document.getElementById('finalText');
+    const summary = document.getElementById('summary');
+
+    function show(screen) {
+      [startScreen, quizScreen, resultScreen].forEach(s => s.classList.remove('active'));
+      screen.classList.add('active');
+    }
+
+    function startQuiz() {
+      current = 0;
+      score = 0;
+      locked = false;
+      history = [];
+      show(quizScreen);
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      locked = false;
+      nextBtn.style.display = 'none';
+      feedbackEl.className = 'feedback';
+      feedbackEl.innerHTML = '';
+
+      const q = questions[current];
+      questionText.textContent = q.question;
+      questionCount.textContent = `Pergunta ${current + 1}/${questions.length}`;
+      scoreCount.textContent = `Pontos: ${score}`;
+      progressBar.style.width = `${(current / questions.length) * 100}%`;
+
+      optionsEl.innerHTML = '';
+      q.options.forEach((option, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'option';
+        btn.innerHTML = `<span class="letter">${letters[index]}</span>${option}`;
+        btn.addEventListener('click', () => choose(index));
+        optionsEl.appendChild(btn);
+      });
+    }
+
+    function choose(index) {
+      if (locked) return;
+      locked = true;
+
+      const q = questions[current];
+      const buttons = [...document.querySelectorAll('.option')];
+      const isCorrect = index === q.answer;
+
+      if (isCorrect) score += 1;
+      scoreCount.textContent = `Pontos: ${score}`;
+      progressBar.style.width = `${((current + 1) / questions.length) * 100}%`;
+
+      buttons.forEach((btn, i) => {
+        if (i === q.answer) btn.classList.add('correct');
+        else if (i === index) btn.classList.add('wrong');
+        else btn.classList.add('disabled');
+        btn.disabled = true;
+      });
+
+      feedbackEl.className = `feedback show ${isCorrect ? 'correct' : 'wrong'}`;
+      feedbackEl.innerHTML = isCorrect
+        ? `<strong>Correto!</strong>${q.explanation}`
+        : `<strong>Resposta incorreta.</strong>${q.explanation}`;
+
+      history.push({
+        question: q.question,
+        selected: `${letters[index]}) ${q.options[index]}`,
+        correct: `${letters[q.answer]}) ${q.options[q.answer]}`
+      });
+
+      nextBtn.style.display = 'inline-flex';
+    }
+
+    function nextQuestion() {
+      current += 1;
+      if (current < questions.length) {
+        renderQuestion();
+      } else {
+        renderResult();
+      }
+    }
+
+    function renderResult() {
+      show(resultScreen);
+      finalScore.textContent = `${score}/${questions.length}`;
+
+      if (score === questions.length) {
+        finalText.textContent = 'Excelente desempenho.';
+      } else if (score >= 4) {
+        finalText.textContent = 'Ótimo resultado.';
+      } else if (score >= 2) {
+        finalText.textContent = 'Bom resultado.';
+      } else {
+        finalText.textContent = 'Quiz finalizado.';
+      }
+
+      summary.innerHTML = history.map((item, i) => `
+        <div class="summary-item">
+          <b>${i + 1}.</b> ${item.question}<br>
+          Sua resposta: ${item.selected}<br>
+          Resposta certa: ${item.correct}
+        </div>
+      `).join('');
+    }
+
+    function goHome() {
+      show(startScreen);
+    }
+
+    startBtn.addEventListener('click', startQuiz);
+    nextBtn.addEventListener('click', nextQuestion);
+    restartBtn.addEventListener('click', startQuiz);
+    homeBtn.addEventListener('click', goHome);
+
+    document.addEventListener('keydown', (e) => {
+      if (!quizScreen.classList.contains('active')) return;
+      if (!locked && ['1', '2', '3', '4'].includes(e.key)) {
+        choose(Number(e.key) - 1);
+      } else if (locked && (e.key === 'Enter' || e.key === ' ')) {
+        nextQuestion();
+      }
+    });
+  </script>
+</body>
+</html>

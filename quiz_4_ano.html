@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz 4º Ano — Violência Digital contra a Mulher</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #64748b;
+      --primary: #7c3aed;
+      --primary-dark: #6d28d9;
+      --border: #e2e8f0;
+      --correct-bg: #ecfdf5;
+      --correct-border: #22c55e;
+      --wrong-bg: #fef2f2;
+      --wrong-border: #ef4444;
+      --option-bg: #faf5ff;
+      --option-hover: #f3e8ff;
+      --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #f5f3ff 0%, #f8fafc 100%);
+      color: var(--text);
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .app {
+      width: min(980px, 100%);
+      min-height: min(92vh, 820px);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .screen {
+      display: none;
+      flex: 1;
+      padding: 32px;
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .center {
+      align-items: center;
+      text-align: center;
+      gap: 18px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: #ede9fe;
+      color: var(--primary-dark);
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      line-height: 1.1;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      line-height: 1.15;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 1.7vw, 1.2rem);
+      line-height: 1.6;
+      max-width: 760px;
+    }
+
+    .bncc {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px 16px;
+      max-width: 760px;
+      text-align: left;
+      color: var(--text);
+      font-size: 0.98rem;
+      line-height: 1.5;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 18px;
+      padding: 16px 24px;
+      cursor: pointer;
+      min-height: 60px;
+      font-size: 1.08rem;
+      font-weight: 800;
+      transition: transform 0.12s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #2563eb);
+      color: white;
+      min-width: 220px;
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: var(--text);
+    }
+
+    .quiz-header {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 16px;
+      background: #ede9fe;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), #2563eb);
+      transition: width 0.3s ease;
+    }
+
+    .stat {
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: #faf5ff;
+      border: 1px solid var(--border);
+      color: var(--primary-dark);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .quiz-body {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .question {
+      font-size: clamp(1.45rem, 2.5vw, 2.1rem);
+      line-height: 1.35;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .option {
+      width: 100%;
+      min-height: 60px;
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      background: var(--option-bg);
+      color: var(--text);
+      padding: 18px 20px;
+      text-align: left;
+      font-size: clamp(1rem, 1.6vw, 1.18rem);
+      font-weight: 800;
+      line-height: 1.4;
+      cursor: pointer;
+      transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+    }
+
+    .option:hover {
+      background: var(--option-hover);
+      transform: translateY(-1px);
+    }
+
+    .option .tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      margin-right: 12px;
+      border-radius: 999px;
+      background: #ddd6fe;
+      color: var(--primary-dark);
+      font-weight: 900;
+      vertical-align: middle;
+    }
+
+    .option.correct {
+      background: var(--correct-bg);
+      border-color: var(--correct-border);
+    }
+
+    .option.wrong {
+      background: var(--wrong-bg);
+      border-color: var(--wrong-border);
+    }
+
+    .option.disabled {
+      opacity: 0.72;
+    }
+
+    .feedback {
+      display: none;
+      padding: 18px 20px;
+      border-radius: 20px;
+      font-size: 1.05rem;
+      line-height: 1.55;
+      font-weight: 700;
+      border: 2px solid transparent;
+    }
+
+    .feedback.show { display: block; }
+    .feedback.correct {
+      background: var(--correct-bg);
+      border-color: #86efac;
+    }
+    .feedback.wrong {
+      background: var(--wrong-bg);
+      border-color: #fca5a5;
+    }
+
+    .feedback strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .quiz-footer {
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.98rem;
+      font-weight: 700;
+    }
+
+    .score-big {
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      line-height: 1;
+      font-weight: 900;
+      color: var(--primary-dark);
+    }
+
+    .summary {
+      width: 100%;
+      display: grid;
+      gap: 12px;
+      margin-top: 8px;
+      text-align: left;
+    }
+
+    .summary-item {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px 16px;
+      background: #fcfcff;
+      font-size: 0.98rem;
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    @media (max-width: 760px) {
+      body { padding: 10px; }
+      .app { min-height: 100vh; border-radius: 0; }
+      .screen { padding: 20px; }
+      .quiz-header { grid-template-columns: 1fr; }
+      .options { grid-template-columns: 1fr; }
+      .quiz-footer { justify-content: center; }
+      .hint { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section id="startScreen" class="screen center active">
+      <span class="badge">Quiz interativo — 4º ano</span>
+      <h1>Violência Digital contra a Mulher</h1>
+      <p>
+        Leia, escolha a resposta e veja na hora se acertou. O quiz trabalha empatia e cuidado no uso da internet.
+      </p>
+      <div class="bncc">
+        <strong>Alinhamento:</strong><br>
+        <strong>Competência Geral 9:</strong> exercitar empatia, diálogo, respeito e cooperação.<br>
+        <strong>Competência Geral 5:</strong> compreender e usar tecnologias digitais de forma crítica, significativa e responsável.
+      </div>
+      <button id="startBtn" class="btn btn-primary">Começar quiz</button>
+    </section>
+
+    <section id="quizScreen" class="screen">
+      <div class="quiz-header">
+        <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+        <div id="questionCount" class="stat">Pergunta 1/8</div>
+        <div id="scoreCount" class="stat">Pontos: 0</div>
+      </div>
+
+      <div class="quiz-body">
+        <div id="questionText" class="question"></div>
+        <div id="options" class="options"></div>
+        <div id="feedback" class="feedback"></div>
+      </div>
+
+      <div class="quiz-footer">
+        <div class="hint">Toque em uma alternativa para responder.</div>
+        <button id="nextBtn" class="btn btn-primary" style="display:none;">Próxima</button>
+      </div>
+    </section>
+
+    <section id="resultScreen" class="screen center">
+      <span class="badge">Resultado final</span>
+      <h2>Quiz concluído</h2>
+      <div id="finalScore" class="score-big">0/8</div>
+      <p id="finalText"></p>
+      <div id="summary" class="summary"></div>
+      <div class="actions">
+        <button id="restartBtn" class="btn btn-primary">Refazer quiz</button>
+        <button id="homeBtn" class="btn btn-secondary">Tela inicial</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        question: '1) Chamar menina de apelido feio no Instagram é violência?',
+        options: ['Sim', 'Não'],
+        answer: 0,
+        explanation: 'Sim. Ofender uma menina na internet machuca e é uma forma de violência digital.'
+      },
+      {
+        question: '2) Compartilhar foto sem permissão é errado?',
+        options: ['Sim', 'Não'],
+        answer: 0,
+        explanation: 'Sim. Antes de postar ou enviar a foto de alguém, é preciso pedir permissão.'
+      },
+      {
+        question: '3) Se alguém pede foto íntima, o que você faz?',
+        options: [
+          'Mando a foto rápido',
+          'Fico em segredo',
+          'Conto para um adulto de confiança e bloqueio',
+          'Peço outra foto também'
+        ],
+        answer: 2,
+        explanation: 'O certo é contar para um adulto de confiança e bloquear. Pedir ou mandar foto íntima é perigoso.'
+      },
+      {
+        question: '4) Fazer piada humilhando mulheres em grupo de mensagem é brincadeira?',
+        options: ['Sim', 'Não'],
+        answer: 1,
+        explanation: 'Não. Humilhar mulheres em mensagens é desrespeito e pode ser violência digital.'
+      },
+      {
+        question: '5) Espalhar boatos sobre uma mulher na internet pode fazer mal?',
+        options: ['Sim', 'Não'],
+        answer: 0,
+        explanation: 'Sim. Boatos podem machucar, causar tristeza e trazer problemas para a vida da pessoa.'
+      },
+      {
+        question: '6) Descobrir a senha de uma mulher e mexer no celular dela sem autorização é certo?',
+        options: ['Sim', 'Não'],
+        answer: 1,
+        explanation: 'Não. Invadir a privacidade de alguém é errado e pode ser uma forma de violência.'
+      },
+      {
+        question: '7) Se você ver uma amiga sendo ofendida online, o que é melhor fazer?',
+        options: [
+          'Rir junto',
+          'Ignorar sempre',
+          'Ajudar, guardar prova e chamar um adulto',
+          'Compartilhar para mais pessoas'
+        ],
+        answer: 2,
+        explanation: 'O melhor é ajudar, guardar prova e chamar um adulto de confiança para apoiar.'
+      },
+      {
+        question: '8) Usar a internet com respeito e cuidado ajuda a proteger meninas e mulheres?',
+        options: ['Sim', 'Não'],
+        answer: 0,
+        explanation: 'Sim. Empatia, respeito e cuidado tornam a internet mais segura para todos.'
+      }
+    ];
+
+    const letters = ['A', 'B', 'C', 'D'];
+    let current = 0;
+    let score = 0;
+    let locked = false;
+    let history = [];
+
+    const startScreen = document.getElementById('startScreen');
+    const quizScreen = document.getElementById('quizScreen');
+    const resultScreen = document.getElementById('resultScreen');
+    const startBtn = document.getElementById('startBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const homeBtn = document.getElementById('homeBtn');
+    const questionText = document.getElementById('questionText');
+    const optionsEl = document.getElementById('options');
+    const feedbackEl = document.getElementById('feedback');
+    const progressBar = document.getElementById('progressBar');
+    const questionCount = document.getElementById('questionCount');
+    const scoreCount = document.getElementById('scoreCount');
+    const finalScore = document.getElementById('finalScore');
+    const finalText = document.getElementById('finalText');
+    const summary = document.getElementById('summary');
+
+    function show(screen) {
+      [startScreen, quizScreen, resultScreen].forEach(s => s.classList.remove('active'));
+      screen.classList.add('active');
+    }
+
+    function startQuiz() {
+      current = 0;
+      score = 0;
+      locked = false;
+      history = [];
+      show(quizScreen);
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      locked = false;
+      nextBtn.style.display = 'none';
+      feedbackEl.className = 'feedback';
+      feedbackEl.innerHTML = '';
+
+      const q = questions[current];
+      questionText.textContent = q.question;
+      questionCount.textContent = `Pergunta ${current + 1}/${questions.length}`;
+      scoreCount.textContent = `Pontos: ${score}`;
+      progressBar.style.width = `${(current / questions.length) * 100}%`;
+
+      optionsEl.innerHTML = '';
+      q.options.forEach((option, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'option';
+        btn.innerHTML = `<span class="tag">${letters[index]}</span>${option}`;
+        btn.addEventListener('click', () => choose(index));
+        optionsEl.appendChild(btn);
+      });
+    }
+
+    function choose(index) {
+      if (locked) return;
+      locked = true;
+
+      const q = questions[current];
+      const buttons = [...document.querySelectorAll('.option')];
+      const isCorrect = index === q.answer;
+
+      if (isCorrect) score += 1;
+      scoreCount.textContent = `Pontos: ${score}`;
+      progressBar.style.width = `${((current + 1) / questions.length) * 100}%`;
+
+      buttons.forEach((btn, i) => {
+        if (i === q.answer) btn.classList.add('correct');
+        else if (i === index) btn.classList.add('wrong');
+        else btn.classList.add('disabled');
+        btn.disabled = true;
+      });
+
+      feedbackEl.className = `feedback show ${isCorrect ? 'correct' : 'wrong'}`;
+      feedbackEl.innerHTML = isCorrect
+        ? `<strong>Resposta certa!</strong>${q.explanation}`
+        : `<strong>Resposta errada.</strong>${q.explanation}`;
+
+      history.push({
+        question: q.question,
+        selected: `${letters[index]}) ${q.options[index]}`,
+        correct: `${letters[q.answer]}) ${q.options[q.answer]}`
+      });
+
+      nextBtn.style.display = 'inline-flex';
+    }
+
+    function nextQuestion() {
+      current += 1;
+      if (current < questions.length) {
+        renderQuestion();
+      } else {
+        renderResult();
+      }
+    }
+
+    function renderResult() {
+      show(resultScreen);
+      finalScore.textContent = `${score}/${questions.length}`;
+
+      if (score === questions.length) {
+        finalText.textContent = 'Excelente. Você mostrou cuidado, empatia e uso responsável da internet.';
+      } else if (score >= 6) {
+        finalText.textContent = 'Muito bem. Você entendeu bastante sobre respeito e segurança digital.';
+      } else if (score >= 4) {
+        finalText.textContent = 'Bom trabalho. Continue aprendendo como usar a internet com respeito.';
+      } else {
+        finalText.textContent = 'Você terminou o quiz. Vale revisar as respostas para aprender ainda mais.';
+      }
+
+      summary.innerHTML = history.map((item, i) => `
+        <div class="summary-item">
+          <strong>${i + 1}.</strong> ${item.question}<br>
+          Sua resposta: ${item.selected}<br>
+          Resposta certa: ${item.correct}
+        </div>
+      `).join('');
+    }
+
+    function goHome() {
+      show(startScreen);
+    }
+
+    startBtn.addEventListener('click', startQuiz);
+    nextBtn.addEventListener('click', nextQuestion);
+    restartBtn.addEventListener('click', startQuiz);
+    homeBtn.addEventListener('click', goHome);
+
+    document.addEventListener('keydown', (e) => {
+      if (!quizScreen.classList.contains('active')) return;
+      if (!locked && ['1', '2', '3', '4'].includes(e.key)) {
+        const index = Number(e.key) - 1;
+        if (questions[current].options[index] !== undefined) choose(index);
+      } else if (locked && (e.key === 'Enter' || e.key === ' ')) {
+        nextQuestion();
+      }
+    });
+  </script>
+</body>
+</html>

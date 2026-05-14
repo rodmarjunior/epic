@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz Infantil — Duelo em Dupla</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #f8fbff;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #64748b;
+      --left: #0ea5e9;
+      --left-soft: #e0f2fe;
+      --right: #f97316;
+      --right-soft: #ffedd5;
+      --border: #dbeafe;
+      --correct: #16a34a;
+      --correct-bg: #ecfdf5;
+      --wrong: #dc2626;
+      --wrong-bg: #fef2f2;
+      --shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #f0f9ff 0%, #fff7ed 100%);
+      color: var(--text);
+    }
+
+    body {
+      min-height: 100vh;
+      padding: 12px;
+    }
+
+    .app {
+      width: 100%;
+      min-height: calc(100vh - 24px);
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(255,255,255,0.75);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .screen { display: none; min-height: calc(100vh - 24px); }
+    .screen.active { display: flex; }
+
+    .start-screen,
+    .result-screen {
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      gap: 18px;
+      padding: 28px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-weight: 800;
+      background: #ede9fe;
+      color: #6d28d9;
+      font-size: 1rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      line-height: 1.1;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      line-height: 1.15;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 1.6vw, 1.2rem);
+      line-height: 1.6;
+      max-width: 900px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 18px;
+      padding: 16px 24px;
+      min-height: 62px;
+      font-size: 1.08rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary {
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: white;
+      min-width: 240px;
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    .duo-screen {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: calc(100vh - 24px);
+    }
+
+    .player {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-height: calc(100vh - 24px);
+    }
+
+    .player.left {
+      background: linear-gradient(180deg, rgba(224,242,254,0.95), rgba(255,255,255,0.98));
+      border-right: 4px solid rgba(255,255,255,0.9);
+    }
+
+    .player.right {
+      background: linear-gradient(180deg, rgba(255,237,213,0.95), rgba(255,255,255,0.98));
+    }
+
+    .player-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .player-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: clamp(1.2rem, 2vw, 1.6rem);
+      font-weight: 900;
+    }
+
+    .avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.4rem;
+      font-weight: 900;
+    }
+
+    .left .avatar { background: var(--left); }
+    .right .avatar { background: var(--right); }
+
+    .stat {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.8);
+      border: 1px solid rgba(255,255,255,0.9);
+      font-weight: 800;
+      white-space: nowrap;
+      font-size: 0.98rem;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 16px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.85);
+      border: 1px solid rgba(255,255,255,0.95);
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      transition: width 0.3s ease;
+    }
+
+    .left .progress-bar { background: linear-gradient(90deg, #38bdf8, #2563eb); }
+    .right .progress-bar { background: linear-gradient(90deg, #fb923c, #ea580c); }
+
+    .card {
+      flex: 1;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(255,255,255,0.95);
+      border-radius: 26px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      justify-content: center;
+    }
+
+    .question {
+      font-size: clamp(1.35rem, 2.3vw, 2rem);
+      line-height: 1.35;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .option {
+      width: 100%;
+      border: 2px solid #e2e8f0;
+      border-radius: 20px;
+      background: #ffffff;
+      color: var(--text);
+      padding: 18px 18px;
+      min-height: 82px;
+      text-align: left;
+      font-size: clamp(1rem, 1.5vw, 1.18rem);
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.18s ease, border-color 0.18s ease;
+      line-height: 1.35;
+    }
+
+    .option:hover { transform: translateY(-1px); }
+
+    .option .letter {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      margin-right: 12px;
+      color: white;
+      font-weight: 900;
+    }
+
+    .left .option .letter { background: var(--left); }
+    .right .option .letter { background: var(--right); }
+
+    .option.correct {
+      background: var(--correct-bg);
+      border-color: #86efac;
+    }
+
+    .option.wrong {
+      background: var(--wrong-bg);
+      border-color: #fca5a5;
+    }
+
+    .option.disabled { opacity: 0.72; }
+
+    .feedback {
+      display: none;
+      border-radius: 18px;
+      padding: 16px 18px;
+      font-size: 1rem;
+      line-height: 1.5;
+      font-weight: 700;
+    }
+
+    .feedback.show { display: block; }
+    .feedback.correct { background: var(--correct-bg); border: 2px solid #86efac; }
+    .feedback.wrong { background: var(--wrong-bg); border: 2px solid #fca5a5; }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .done {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 16px;
+      min-height: 100%;
+    }
+
+    .done-score {
+      font-size: clamp(2.8rem, 6vw, 4.8rem);
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .left .done-score { color: var(--left); }
+    .right .done-score { color: var(--right); }
+
+    .result-grid {
+      width: min(1000px, 100%);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .result-card {
+      background: white;
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+      text-align: left;
+    }
+
+    .result-card h3 {
+      margin: 0 0 12px 0;
+      font-size: 1.3rem;
+    }
+
+    .result-score {
+      font-size: 3rem;
+      font-weight: 900;
+      margin-bottom: 10px;
+    }
+
+    .left-score { color: var(--left); }
+    .right-score { color: var(--right); }
+
+    .winner {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #6d28d9;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    @media (max-width: 980px) {
+      .duo-screen,
+      .result-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .player {
+        min-height: auto;
+      }
+
+      .player.left {
+        border-right: none;
+        border-bottom: 4px solid rgba(255,255,255,0.9);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section id="startScreen" class="screen start-screen active">
+      <span class="badge">Quiz infantil</span>
+      <h1>Violência Digital contra Mulheres</h1>
+      <p>
+        A tela fica dividida no meio. Cada criança responde no seu lado ao mesmo tempo, com pontuação separada e correção imediata.
+      </p>
+      <button id="startBtn" class="btn btn-primary">Começar</button>
+    </section>
+
+    <section id="gameScreen" class="screen duo-screen">
+      <div class="player left" id="leftPlayer"></div>
+      <div class="player right" id="rightPlayer"></div>
+    </section>
+
+    <section id="resultScreen" class="screen result-screen">
+      <span class="badge">Fim do quiz</span>
+      <h2>Resultado</h2>
+      <p id="winnerText" class="winner"></p>
+      <div class="result-grid">
+        <div class="result-card">
+          <h3>Criança 1</h3>
+          <div id="leftFinalScore" class="result-score left-score">0/10</div>
+          <p>Desempenho da criança 1 no quiz.</p>
+        </div>
+        <div class="result-card">
+          <h3>Criança 2</h3>
+          <div id="rightFinalScore" class="result-score right-score">0/10</div>
+          <p>Desempenho da criança 2 no quiz.</p>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="restartBtn" class="btn btn-primary">Jogar de novo</button>
+        <button id="homeBtn" class="btn btn-secondary">Tela inicial</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const quiz = [
+      {
+        question: '1) Espalhar foto de uma menina sem a permissão dela é:',
+        options: ['Brincadeira', 'Errado'],
+        answer: 1,
+        explanation: 'Resposta certa: B'
+      },
+      {
+        question: '2) Mandar mensagens repetidas para assustar alguém é:',
+        options: ['Normal', 'Errado'],
+        answer: 1,
+        explanation: 'Resposta certa: B'
+      },
+      {
+        question: '3) Divulgar imagem íntima sem autorização é:',
+        options: ['Crime', 'Não é crime'],
+        answer: 0,
+        explanation: 'Resposta certa: A'
+      },
+      {
+        question: '4) Controlar o celular, a senha ou a localização de uma mulher sem consentimento é:',
+        options: ['Cuidado', 'Controle e violência'],
+        answer: 1,
+        explanation: 'Resposta certa: B'
+      },
+      {
+        question: '5) Se uma menina disser que está sendo ameaçada online, o certo é:',
+        options: ['Guardar segredo', 'Pedir ajuda a um adulto de confiança'],
+        answer: 1,
+        explanation: 'Resposta certa: B'
+      },
+      {
+        question: '6) O canal do governo para orientar e denunciar violência contra a mulher é:',
+        options: ['192', '180'],
+        answer: 1,
+        explanation: 'Resposta certa: B'
+      },
+      {
+        question: '7) Se houver perigo na hora, o certo é ligar para:',
+        options: ['190', '102'],
+        answer: 0,
+        explanation: 'Resposta certa: A'
+      },
+      {
+        question: '8) Fazer piada humilhando meninas na internet é:',
+        options: ['Engraçado', 'Errado e pode virar cyberbullying'],
+        answer: 1,
+        explanation: 'Resposta certa: B'
+      },
+      {
+        question: '9) Antes de compartilhar a foto de alguém, o certo é:',
+        options: ['Postar logo', 'Pedir permissão'],
+        answer: 1,
+        explanation: 'Resposta certa: B'
+      },
+      {
+        question: '10) Se algo na internet der medo, vergonha ou ameaça, a criança deve:',
+        options: ['Resolver sozinha', 'Contar para um adulto confiável'],
+        answer: 1,
+        explanation: 'Resposta certa: B'
+      }
+    ];
+
+    const letters = ['A', 'B'];
+
+    const players = {
+      left: { name: 'Criança 1', side: 'left', index: 0, score: 0, locked: false, finished: false },
+      right: { name: 'Criança 2', side: 'right', index: 0, score: 0, locked: false, finished: false }
+    };
+
+    const startScreen = document.getElementById('startScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const resultScreen = document.getElementById('resultScreen');
+    const leftPlayerEl = document.getElementById('leftPlayer');
+    const rightPlayerEl = document.getElementById('rightPlayer');
+    const leftFinalScore = document.getElementById('leftFinalScore');
+    const rightFinalScore = document.getElementById('rightFinalScore');
+    const winnerText = document.getElementById('winnerText');
+
+    function show(screen) {
+      [startScreen, gameScreen, resultScreen].forEach(s => s.classList.remove('active'));
+      screen.classList.add('active');
+    }
+
+    function resetGame() {
+      Object.values(players).forEach(p => {
+        p.index = 0;
+        p.score = 0;
+        p.locked = false;
+        p.finished = false;
+      });
+      renderPlayer(players.left, leftPlayerEl);
+      renderPlayer(players.right, rightPlayerEl);
+      show(gameScreen);
+    }
+
+    function renderPlayer(player, container) {
+      if (player.finished) {
+        container.innerHTML = `
+          <div class="player-header">
+            <div class="player-title">
+              <span class="avatar">${player.side === 'left' ? '1' : '2'}</span>
+              <span>${player.name}</span>
+            </div>
+            <div class="stat">Pontos: ${player.score}</div>
+          </div>
+          <div class="progress-track"><div class="progress-bar" style="width:100%"></div></div>
+          <div class="card">
+            <div class="done">
+              <div class="question">Terminou!</div>
+              <div class="done-score">${player.score}/${quiz.length}</div>
+              <p>Este lado já concluiu todas as perguntas.</p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const item = quiz[player.index];
+      container.innerHTML = `
+        <div class="player-header">
+          <div class="player-title">
+            <span class="avatar">${player.side === 'left' ? '1' : '2'}</span>
+            <span>${player.name}</span>
+          </div>
+          <div class="stat">Pontos: ${player.score}</div>
+        </div>
+
+        <div class="progress-track">
+          <div class="progress-bar" style="width:${(player.index / quiz.length) * 100}%"></div>
+        </div>
+
+        <div class="card">
+          <div class="question">${item.question}</div>
+          <div class="options">
+            ${item.options.map((opt, i) => `
+              <button class="option" data-side="${player.side}" data-index="${i}">
+                <span class="letter">${letters[i]}</span>${opt}
+              </button>
+            `).join('')}
+          </div>
+          <div class="feedback" id="feedback-${player.side}"></div>
+          <div class="controls">
+            <div class="hint">Pergunta ${player.index + 1} de ${quiz.length}</div>
+            <button class="btn btn-primary" id="next-${player.side}" style="display:none; min-width:160px;">Avançar</button>
+          </div>
+        </div>
+      `;
+
+      container.querySelectorAll('.option').forEach(btn => {
+        btn.addEventListener('click', () => choose(player.side, Number(btn.dataset.index)));
+      });
+
+      container.querySelector(`#next-${player.side}`).addEventListener('click', () => next(player.side));
+    }
+
+    function choose(side, selectedIndex) {
+      const player = players[side];
+      if (player.locked || player.finished) return;
+      player.locked = true;
+
+      const item = quiz[player.index];
+      const container = side === 'left' ? leftPlayerEl : rightPlayerEl;
+      const buttons = [...container.querySelectorAll('.option')];
+      const feedback = container.querySelector(`#feedback-${side}`);
+      const nextBtn = container.querySelector(`#next-${side}`);
+      const isCorrect = selectedIndex === item.answer;
+
+      if (isCorrect) player.score += 1;
+
+      buttons.forEach((btn, i) => {
+        if (i === item.answer) btn.classList.add('correct');
+        else if (i === selectedIndex) btn.classList.add('wrong');
+        else btn.classList.add('disabled');
+        btn.disabled = true;
+      });
+
+      feedback.className = `feedback show ${isCorrect ? 'correct' : 'wrong'}`;
+      feedback.innerHTML = isCorrect
+        ? `<strong>Correto!</strong> ${item.explanation}`
+        : `<strong>Ops!</strong> ${item.explanation}`;
+
+      const stat = container.querySelector('.stat');
+      stat.textContent = `Pontos: ${player.score}`;
+
+      const bar = container.querySelector('.progress-bar');
+      bar.style.width = `${((player.index + 1) / quiz.length) * 100}%`;
+
+      nextBtn.style.display = 'inline-flex';
+    }
+
+    function next(side) {
+      const player = players[side];
+      player.index += 1;
+      player.locked = false;
+
+      if (player.index >= quiz.length) {
+        player.finished = true;
+      }
+
+      const container = side === 'left' ? leftPlayerEl : rightPlayerEl;
+      renderPlayer(player, container);
+      checkFinished();
+    }
+
+    function checkFinished() {
+      if (players.left.finished && players.right.finished) {
+        renderResults();
+      }
+    }
+
+    function renderResults() {
+      leftFinalScore.textContent = `${players.left.score}/${quiz.length}`;
+      rightFinalScore.textContent = `${players.right.score}/${quiz.length}`;
+
+      if (players.left.score > players.right.score) {
+        winnerText.textContent = 'Criança 1 venceu.';
+      } else if (players.right.score > players.left.score) {
+        winnerText.textContent = 'Criança 2 venceu.';
+      } else {
+        winnerText.textContent = 'Empate.';
+      }
+
+      show(resultScreen);
+    }
+
+    document.getElementById('startBtn').addEventListener('click', resetGame);
+    document.getElementById('restartBtn').addEventListener('click', resetGame);
+    document.getElementById('homeBtn').addEventListener('click', () => show(startScreen));
+  </script>
+</body>
+</html>

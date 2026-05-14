@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tabuada do 5 — Lousa Touch</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; user-select:none; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(135deg, #1a1a6e 0%, #2d2db0 50%, #1a1a6e 100%);
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Stars */
+  .stars { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
+  .star {
+    position:absolute; background:#fff; border-radius:50%;
+    animation: twinkle 2s infinite alternate;
+  }
+  @keyframes twinkle { from{opacity:.1} to{opacity:.7} }
+
+  .container {
+    position: relative; z-index:10;
+    width: 96vw; max-width: 1100px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 1.2vh;
+  }
+
+  /* Header */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; background: rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 0.8vh 2vw;
+    border: 2px solid rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+  }
+  .titulo { font-size: clamp(1.4rem,3.5vw,2.2rem); color:#fff; font-weight:900; }
+  .titulo span { color:#FFD700; }
+
+  .score-box {
+    display:flex; gap:1vw;
+  }
+  .score-item {
+    display:flex; flex-direction:column; align-items:center;
+    background: rgba(255,255,255,0.15); border-radius:14px;
+    padding: 0.4vh 1.2vw;
+    min-width: 80px;
+  }
+  .score-label { font-size:0.7rem; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:.08em; }
+  .score-num { font-size:clamp(1.4rem,3vw,2rem); font-weight:900; color:#FFD700; line-height:1; }
+  #score-acertos .score-num { color:#4fffb0; }
+  #score-erros   .score-num { color:#ff6b8a; }
+
+  /* Pergunta */
+  .pergunta-wrap {
+    width:100%;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .pergunta-box {
+    background: rgba(255,255,255,0.15);
+    border: 3px solid rgba(255,215,0,0.5);
+    border-radius: 28px;
+    padding: 1.5vh 4vw;
+    text-align:center;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 0 40px rgba(255,215,0,0.15);
+    animation: entradaPerg 0.4s cubic-bezier(.175,.885,.32,1.275);
+    width: 100%;
+  }
+  @keyframes entradaPerg {
+    from { transform:scale(0.7); opacity:0; }
+    to   { transform:scale(1);   opacity:1; }
+  }
+  .pergunta-serie { font-size:0.85rem; color:rgba(255,255,255,.55); letter-spacing:.2em; text-transform:uppercase; margin-bottom:.3vh; }
+  .pergunta-texto {
+    font-size: clamp(3rem, 9vw, 6.5rem);
+    font-weight:900; color:#fff;
+    line-height:1;
+    text-shadow: 0 0 30px rgba(255,215,0,.4);
+  }
+  .pergunta-texto .op { color:#FFD700; }
+  .pergunta-hint { font-size:clamp(.9rem,2vw,1.2rem); color:rgba(255,255,255,.45); margin-top:.5vh; }
+
+  /* Timer bar */
+  .timer-wrap { width:100%; }
+  .timer-bar-bg {
+    width:100%; height:14px; background:rgba(255,255,255,.12);
+    border-radius:50px; overflow:hidden;
+    border: 1px solid rgba(255,255,255,.15);
+  }
+  .timer-bar-fill {
+    height:100%; border-radius:50px;
+    background: linear-gradient(90deg,#4fffb0,#FFD700);
+    transition: width 1s linear, background .5s;
+  }
+
+  /* Opções */
+  .opcoes-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5vw;
+    width: 100%;
+  }
+  .btn-opcao {
+    background: rgba(255,255,255,0.12);
+    border: 3px solid rgba(255,255,255,0.25);
+    border-radius: 24px;
+    padding: 2.5vh 1vw;
+    font-family:'Nunito',sans-serif;
+    font-size: clamp(1.8rem,5vw,3.5rem);
+    font-weight:900; color:#fff;
+    cursor:pointer;
+    transition: transform .15s, background .15s, border-color .15s;
+    text-align:center;
+    box-shadow: 0 4px 15px rgba(0,0,0,.2);
+    position:relative; overflow:hidden;
+  }
+  .btn-opcao:hover, .btn-opcao:focus {
+    transform:scale(1.06);
+    background: rgba(255,255,255,0.22);
+    border-color: rgba(255,255,255,.5);
+    outline:none;
+  }
+  .btn-opcao:active { transform:scale(.96); }
+
+  .btn-opcao.acerto {
+    background: rgba(79,255,176,0.3) !important;
+    border-color: #4fffb0 !important;
+    box-shadow: 0 0 40px rgba(79,255,176,.5) !important;
+    animation: pulsaAcerto .5s ease;
+  }
+  .btn-opcao.erro {
+    background: rgba(255,107,138,0.3) !important;
+    border-color: #ff6b8a !important;
+    animation: shake .35s ease;
+  }
+  @keyframes pulsaAcerto {
+    0%,100% { transform:scale(1); }
+    50%      { transform:scale(1.12); }
+  }
+  @keyframes shake {
+    0%,100% { transform:translateX(0); }
+    25%     { transform:translateX(-10px); }
+    75%     { transform:translateX(10px); }
+  }
+
+  /* Feedback overlay */
+  #feedback-overlay {
+    position:fixed; top:0; left:0; width:100%; height:100%;
+    z-index:100; pointer-events:none;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .feedback-msg {
+    font-family:'Nunito',sans-serif;
+    font-size: clamp(5rem,18vw,12rem);
+    font-weight:900;
+    animation: feedAnim .8s ease forwards;
+    opacity:0; text-shadow: 0 0 60px currentColor;
+  }
+  @keyframes feedAnim {
+    0%   { transform:scale(.3); opacity:1; }
+    60%  { transform:scale(1.2); opacity:1; }
+    100% { transform:scale(1.6); opacity:0; }
+  }
+
+  /* Partículas */
+  .particula {
+    position:fixed; border-radius:50%; pointer-events:none; z-index:99;
+    animation: explode .7s ease forwards;
+  }
+  @keyframes explode {
+    0%   { transform:translate(0,0) scale(1); opacity:1; }
+    100% { transform:translate(var(--dx),var(--dy)) scale(0); opacity:0; }
+  }
+
+  /* Pontos flutuantes */
+  .pts-fly {
+    position:fixed; z-index:98; pointer-events:none;
+    font-family:'Nunito',sans-serif; font-weight:900;
+    font-size:2.5rem; color:#FFD700;
+    text-shadow:0 0 20px #FFD700;
+    animation: ptsFly 1.2s ease forwards;
+  }
+  @keyframes ptsFly {
+    0%   { transform:translateY(0) scale(1); opacity:1; }
+    100% { transform:translateY(-100px) scale(1.3); opacity:0; }
+  }
+
+  /* Tela fim */
+  #tela-fim {
+    position:fixed; top:0; left:0; width:100%; height:100%;
+    background: linear-gradient(135deg,#1a1a6e,#2d2db0);
+    z-index:200; display:none;
+    flex-direction:column; align-items:center; justify-content:center;
+    gap:2vh;
+  }
+  #tela-fim.ativa { display:flex; }
+  .fim-emoji { font-size:clamp(4rem,12vw,8rem); animation:troFeU .8s cubic-bezier(.175,.885,.32,1.275); }
+  @keyframes troFeU { from{transform:scale(0) rotate(-180deg);opacity:0} to{transform:scale(1) rotate(0);opacity:1} }
+  .fim-titulo { font-size:clamp(2rem,6vw,4.5rem); font-weight:900; color:#fff; text-align:center; }
+  .fim-sub { font-size:clamp(1rem,2.5vw,1.6rem); color:rgba(255,255,255,.6); text-align:center; }
+  .fim-placar {
+    display:flex; gap:2vw; align-items:center;
+  }
+  .fim-card {
+    background:rgba(255,255,255,.12); border-radius:20px;
+    padding:1.5vh 3vw; text-align:center;
+    border:2px solid rgba(255,255,255,.2);
+    min-width:120px;
+  }
+  .fim-card .num { font-size:clamp(2.5rem,7vw,5rem); font-weight:900; line-height:1; }
+  .fim-card .lbl { font-size:.85rem; color:rgba(255,255,255,.6); text-transform:uppercase; letter-spacing:.1em; }
+  .btn-reiniciar {
+    background: linear-gradient(135deg,#FFD700,#FFA500);
+    border:none; border-radius:18px;
+    padding:1.2vh 4vw;
+    font-family:'Nunito',sans-serif;
+    font-size:clamp(1.2rem,3vw,1.8rem); font-weight:900;
+    color:#1a1a6e; cursor:pointer;
+    box-shadow:0 0 30px rgba(255,215,0,.4);
+    transition:transform .2s, box-shadow .2s;
+    margin-top:1vh;
+  }
+  .btn-reiniciar:hover { transform:scale(1.08); box-shadow:0 0 50px rgba(255,215,0,.7); }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+<div id="feedback-overlay"></div>
+
+<div class="container" id="container-jogo">
+  <!-- Header -->
+  <div class="header">
+    <div class="titulo">Tabuada do <span>5</span> ⭐</div>
+    <div class="score-box">
+      <div class="score-item" id="score-rodada">
+        <span class="score-label">Rodada</span>
+        <span class="score-num" id="num-rodada">1/10</span>
+      </div>
+      <div class="score-item" id="score-acertos">
+        <span class="score-label">Acertos</span>
+        <span class="score-num" id="num-acertos">0</span>
+      </div>
+      <div class="score-item" id="score-erros">
+        <span class="score-label">Erros</span>
+        <span class="score-num" id="num-erros">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timer -->
+  <div class="timer-wrap">
+    <div class="timer-bar-bg"><div class="timer-bar-fill" id="timer-fill"></div></div>
+  </div>
+
+  <!-- Pergunta -->
+  <div class="pergunta-wrap">
+    <div class="pergunta-box">
+      <div class="pergunta-serie">✏️ Toque na resposta certa!</div>
+      <div class="pergunta-texto" id="perg-texto">?</div>
+      <div class="pergunta-hint" id="perg-hint"></div>
+    </div>
+  </div>
+
+  <!-- Opções -->
+  <div class="opcoes-grid" id="opcoes-grid"></div>
+</div>
+
+<!-- Tela Fim -->
+<div id="tela-fim">
+  <div class="fim-emoji" id="fim-emoji">🏆</div>
+  <div class="fim-titulo" id="fim-titulo">Parabéns!</div>
+  <div class="fim-sub" id="fim-sub">Você completou a tabuada do 5!</div>
+  <div class="fim-placar">
+    <div class="fim-card">
+      <div class="num" style="color:#4fffb0" id="fim-acertos">0</div>
+      <div class="lbl">Acertos</div>
+    </div>
+    <div style="font-size:2rem;color:rgba(255,255,255,.3)">vs</div>
+    <div class="fim-card">
+      <div class="num" style="color:#ff6b8a" id="fim-erros">0</div>
+      <div class="lbl">Erros</div>
+    </div>
+  </div>
+  <button class="btn-reiniciar" onclick="reiniciar()">🔄 Jogar de novo!</button>
+</div>
+
+<script>
+// ── Estrelas ──────────────────────────────────────────────────────────────
+(function(){
+  const c = document.getElementById('stars');
+  for(let i=0;i<80;i++){
+    const s=document.createElement('div');
+    s.className='star';
+    const sz=Math.random()*3+1;
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*3}s;animation-duration:${2+Math.random()*3}s;`;
+    c.appendChild(s);
+  }
+})();
+
+// ── Banco de perguntas ─────────────────────────────────────────────────────
+const PERGUNTAS = [
+  {p:"1 × 5 = ?", r:5},  {p:"2 × 5 = ?", r:10}, {p:"3 × 5 = ?", r:15},
+  {p:"4 × 5 = ?", r:20}, {p:"5 × 5 = ?", r:25},  {p:"6 × 5 = ?", r:30},
+  {p:"7 × 5 = ?", r:35}, {p:"8 × 5 = ?", r:40},  {p:"9 × 5 = ?", r:45},
+  {p:"10 × 5 = ?",r:50},
+];
+
+// ── Estado ────────────────────────────────────────────────────────────────
+let estado = { rodada:0, acertos:0, erros:0, bloqueado:false, timer:null, tempo:15, perguntas:[] };
+
+function embaralhar(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a; }
+
+function gerarOpcoes(r){
+  const s=new Set([r]);
+  const vars=[r-5,r+5,r-10,r+10,r+15,r-15,r*2,r+1,r-1,r+2,r+3].filter(v=>v>0&&v!==r);
+  embaralhar(vars);
+  for(const v of vars){ if(s.size>=4)break; s.add(v); }
+  return embaralhar([...s]);
+}
+
+function iniciar(){
+  estado = { rodada:0, acertos:0, erros:0, bloqueado:false, timer:null, tempo:15, perguntas: embaralhar([...PERGUNTAS]) };
+  document.getElementById('tela-fim').classList.remove('ativa');
+  proximaRodada();
+}
+
+function proximaRodada(){
+  if(estado.rodada >= estado.perguntas.length){ terminar(); return; }
+  estado.bloqueado = false;
+  const q = estado.perguntas[estado.rodada];
+  estado.rodada++;
+
+  // Atualizar UI
+  document.getElementById('num-rodada').textContent = `${estado.rodada}/${estado.perguntas.length}`;
+  document.getElementById('perg-texto').innerHTML = q.p.replace('×','<span class="op">×</span>');
+  document.getElementById('perg-hint').textContent = `Qual é o resultado?`;
+
+  // Anima pergunta
+  const box = document.querySelector('.pergunta-box');
+  box.style.animation='none'; requestAnimationFrame(()=>{ box.style.animation=''; });
+
+  // Opções
+  const grid = document.getElementById('opcoes-grid');
+  grid.innerHTML='';
+  gerarOpcoes(q.r).forEach(op=>{
+    const btn=document.createElement('button');
+    btn.className='btn-opcao';
+    btn.textContent=op;
+    btn.addEventListener('click',()=>responder(op,q.r,btn));
+    btn.addEventListener('touchstart',e=>{ e.preventDefault(); responder(op,q.r,btn); },{ passive:false });
+    grid.appendChild(btn);
+  });
+
+  iniciarTimer();
+}
+
+function iniciarTimer(){
+  clearInterval(estado.timer);
+  estado.tempo=15;
+  atualizarTimer();
+  estado.timer=setInterval(()=>{
+    estado.tempo--;
+    atualizarTimer();
+    if(estado.tempo<=0){ clearInterval(estado.timer); tempoEsgotado(); }
+  },1000);
+}
+
+function atualizarTimer(){
+  const pct=(estado.tempo/15)*100;
+  const fill=document.getElementById('timer-fill');
+  fill.style.width=pct+'%';
+  if(pct>60) fill.style.background='linear-gradient(90deg,#4fffb0,#FFD700)';
+  else if(pct>30) fill.style.background='linear-gradient(90deg,#FFD700,orange)';
+  else fill.style.background='linear-gradient(90deg,orange,#ff6b8a)';
+}
+
+function tempoEsgotado(){
+  if(estado.bloqueado)return;
+  estado.bloqueado=true;
+  estado.erros++;
+  document.getElementById('num-erros').textContent=estado.erros;
+  mostrarFeedback('⏱','#FFD700');
+  setTimeout(proximaRodada,1000);
+}
+
+function responder(val, correto, btn){
+  if(estado.bloqueado)return;
+  clearInterval(estado.timer);
+  estado.bloqueado=true;
+
+  if(val===correto){
+    btn.classList.add('acerto');
+    estado.acertos++;
+    document.getElementById('num-acertos').textContent=estado.acertos;
+    mostrarFeedback('⭐','#4fffb0');
+    explodir(btn,'#4fffb0');
+    pontosVoando(btn);
+  } else {
+    btn.classList.add('erro');
+    estado.erros++;
+    document.getElementById('num-erros').textContent=estado.erros;
+    mostrarFeedback('❌','#ff6b8a');
+    // Mostra resposta certa
+    document.querySelectorAll('.btn-opcao').forEach(b=>{
+      if(parseInt(b.textContent)===correto) b.classList.add('acerto');
+    });
+  }
+  setTimeout(proximaRodada,1100);
+}
+
+function mostrarFeedback(txt,cor){
+  const el=document.createElement('div');
+  el.className='feedback-msg'; el.textContent=txt; el.style.color=cor;
+  document.getElementById('feedback-overlay').appendChild(el);
+  setTimeout(()=>el.remove(),900);
+}
+
+function explodir(btn,cor){
+  const rect=btn.getBoundingClientRect();
+  const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+  for(let i=0;i<12;i++){
+    const p=document.createElement('div');
+    p.className='particula';
+    const ang=(Math.PI*2*i)/12;
+    const dist=60+Math.random()*80;
+    const sz=8+Math.random()*8;
+    p.style.cssText=`left:${cx}px;top:${cy}px;width:${sz}px;height:${sz}px;background:${cor};--dx:${Math.cos(ang)*dist}px;--dy:${Math.sin(ang)*dist}px;animation-duration:${.5+Math.random()*.4}s;`;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),1000);
+  }
+}
+
+function pontosVoando(btn){
+  const rect=btn.getBoundingClientRect();
+  const el=document.createElement('div');
+  el.className='pts-fly'; el.textContent='+1';
+  el.style.left=(rect.left+rect.width/2-20)+'px';
+  el.style.top=(rect.top)+'px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1300);
+}
+
+function terminar(){
+  document.getElementById('fim-acertos').textContent=estado.acertos;
+  document.getElementById('fim-erros').textContent=estado.erros;
+  const pct=Math.round((estado.acertos/estado.perguntas.length)*100);
+  let emoji='🏆', titulo='Incrível!', sub='Você arrasou na tabuada do 5!';
+  if(pct<50){ emoji='💪'; titulo='Continue tentando!'; sub='Pratique mais e você vai conseguir!'; }
+  else if(pct<80){ emoji='😊'; titulo='Muito bem!'; sub='Você está no caminho certo!'; }
+  document.getElementById('fim-emoji').textContent=emoji;
+  document.getElementById('fim-titulo').textContent=titulo;
+  document.getElementById('fim-sub').textContent=sub;
+  document.getElementById('tela-fim').classList.add('ativa');
+
+  // Confete
+  for(let i=0;i<40;i++){
+    setTimeout(()=>{
+      const p=document.createElement('div');
+      p.className='particula';
+      const cores=['#FFD700','#4fffb0','#ff6b8a','#a78bfa','#60a5fa'];
+      const sz=8+Math.random()*10;
+      p.style.cssText=`left:${Math.random()*100}vw;top:${Math.random()*30}vh;width:${sz}px;height:${sz}px;background:${cores[Math.floor(Math.random()*cores.length)]};border-radius:${Math.random()>.5?'50%':'3px'};--dx:${(Math.random()-.5)*200}px;--dy:${80+Math.random()*200}px;animation-duration:${1+Math.random()}s;`;
+      document.body.appendChild(p);
+      setTimeout(()=>p.remove(),2000);
+    },i*50);
+  }
+}
+
+function reiniciar(){ iniciar(); }
+
+// Iniciar!
+iniciar();
+</script>
+</body>
+</html>
