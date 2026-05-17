@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cobra das Sílabas</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; user-select:none; }
+
+body {
+  font-family:'Nunito',sans-serif;
+  background: #0A1628;
+  color:#fff;
+  height:100vh;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ── TELA INÍCIO ── */
+#tela-inicio {
+  position:fixed; inset:0; z-index:50;
+  background: radial-gradient(ellipse at top, #1A3A6C, #0A1628);
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:1.5vh; padding:2vh;
+}
+.titulo-jogo {
+  font-size:clamp(2.5rem,7vw,5rem);
+  font-weight:900; text-align:center;
+  background: linear-gradient(135deg,#4ADE80,#00C8FF,#FFD700);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  filter: drop-shadow(0 0 20px rgba(74,222,128,0.4));
+  line-height:1.1;
+}
+.subtitulo-jogo {
+  font-size:clamp(1rem,2.2vw,1.4rem);
+  color:rgba(255,255,255,0.6); text-align:center;
+}
+
+.config-box {
+  background:rgba(255,255,255,0.07);
+  border:1.5px solid rgba(255,255,255,0.15);
+  border-radius:24px; padding:2vh 3vw;
+  width:min(700px,90vw);
+  display:flex; flex-direction:column; gap:1.5vh;
+}
+.config-titulo {
+  font-size:1rem; font-weight:800;
+  color:#FFD700; text-transform:uppercase;
+  letter-spacing:.1em;
+}
+
+/* Seleção de nível */
+.nivel-grid {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:1vw;
+}
+.btn-nivel {
+  padding:1.2vh 1vw; border-radius:16px;
+  border:2px solid rgba(255,255,255,0.2);
+  background:rgba(255,255,255,0.06);
+  color:rgba(255,255,255,0.7);
+  font-family:'Nunito',sans-serif;
+  font-size:clamp(0.85rem,1.8vw,1.1rem);
+  font-weight:800; cursor:pointer;
+  transition:all .2s; text-align:center;
+  line-height:1.3;
+}
+.btn-nivel:hover { transform:scale(1.05); }
+.btn-nivel.ativo {
+  border-color:#4ADE80; color:#4ADE80;
+  background:rgba(74,222,128,0.1);
+  box-shadow:0 0 15px rgba(74,222,128,0.25);
+}
+
+/* Velocidade */
+.vel-row {
+  display:flex; align-items:center; gap:1.5vw;
+}
+.vel-label {
+  font-size:0.85rem; color:rgba(255,255,255,0.5);
+  white-space:nowrap;
+}
+.vel-track {
+  flex:1; height:28px; border-radius:999px;
+  background:rgba(255,255,255,0.08);
+  border:2px solid rgba(255,255,255,0.15);
+  position:relative; cursor:pointer; overflow:hidden;
+}
+.vel-fill {
+  height:100%; border-radius:999px;
+  background:linear-gradient(90deg,#4ADE80,#00C8FF,#FFD700,#FF6B9D);
+  pointer-events:none; transition:width .15s;
+}
+.vel-handle {
+  position:absolute; top:50%; transform:translate(-50%,-50%);
+  width:32px; height:32px; border-radius:50%;
+  background:#fff; border:3px solid #FFD700;
+  box-shadow:0 0 12px rgba(255,215,0,.5);
+  cursor:grab; z-index:2; transition:left .1s;
+}
+.vel-ticks {
+  display:flex; justify-content:space-between;
+  font-size:0.7rem; color:rgba(255,255,255,0.4);
+  padding:0 2px; margin-top:3px;
+}
+
+.btn-comecar {
+  border:none; border-radius:999px;
+  padding:1.4vh 4vw;
+  font-family:'Nunito',sans-serif;
+  font-size:clamp(1.2rem,2.5vw,1.6rem);
+  font-weight:900; cursor:pointer;
+  background:linear-gradient(135deg,#4ADE80,#00C8FF);
+  color:#0A1628;
+  box-shadow:0 0 30px rgba(74,222,128,0.4);
+  transition:all .2s; opacity:.45; pointer-events:none;
+}
+.btn-comecar.ativo {
+  opacity:1; pointer-events:all;
+}
+.btn-comecar.ativo:hover { transform:scale(1.06); box-shadow:0 0 50px rgba(74,222,128,.6); }
+
+/* ── HUD JOGO ── */
+#hud {
+  display:none;
+  flex-direction:row; align-items:center;
+  justify-content:space-between;
+  padding:.6vh 2vw;
+  background:rgba(0,0,0,0.3);
+  border-bottom:1px solid rgba(255,255,255,0.08);
+  gap:1vw; flex-shrink:0;
+}
+.hud-bloco {
+  display:flex; flex-direction:column;
+  align-items:center; gap:.1vh;
+  min-width:80px;
+}
+.hud-label {
+  font-size:.65rem; text-transform:uppercase;
+  letter-spacing:.12em; color:rgba(255,255,255,0.4);
+}
+.hud-val {
+  font-family:'Nunito',sans-serif;
+  font-size:clamp(1.2rem,2.5vw,1.8rem);
+  font-weight:900; line-height:1;
+}
+.hud-verde { color:#4ADE80; }
+.hud-azul  { color:#00C8FF; }
+.hud-ouro  { color:#FFD700; }
+.hud-coral { color:#FF6B9D; }
+
+/* Palavra alvo */
+.palavra-alvo-wrap {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; gap:.2vh;
+}
+.emoji-alvo { font-size:clamp(1.4rem,3vw,2.2rem); line-height:1; }
+.palavra-slots {
+  display:flex; gap:.4vw; align-items:center;
+}
+.slot-letra {
+  min-width:clamp(32px,4vw,52px);
+  height:clamp(32px,4vw,52px);
+  border-radius:10px;
+  border:2px dashed rgba(255,255,255,0.3);
+  background:rgba(255,255,255,0.05);
+  display:flex; align-items:center; justify-content:center;
+  font-size:clamp(0.8rem,1.8vw,1.2rem); font-weight:900;
+  transition:all .2s;
+}
+.slot-letra.preenchido {
+  border-style:solid; border-color:#4ADE80;
+  background:rgba(74,222,128,0.15);
+  color:#4ADE80;
+}
+.slot-letra.correto {
+  border-color:#FFD700; background:rgba(255,215,0,0.2);
+  color:#FFD700; animation:popSlot .3s ease;
+}
+@keyframes popSlot {
+  0%,100% { transform:scale(1); }
+  50%     { transform:scale(1.2); }
+}
+
+/* Timer bar */
+.timer-bar-bg {
+  flex:1; max-width:200px;
+  height:12px; border-radius:999px;
+  background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.1);
+  overflow:hidden;
+}
+.timer-bar-fill {
+  height:100%; border-radius:999px;
+  background:linear-gradient(90deg,#4ADE80,#FFD700);
+  transition:width 1s linear, background .5s;
+}
+
+/* ── CANVAS ── */
+#arena {
+  display:none; flex:1; position:relative; overflow:hidden;
+}
+canvas { display:block; width:100%; height:100%; }
+
+/* Setas de controle */
+#controles {
+  display:none;
+  position:absolute; bottom:2vh; right:2vw;
+  display:grid;
+  grid-template-areas:"  . cima  .  ""esq .    dir""  . baixo .  ";
+  gap:.5vw; z-index:10;
+}
+#controles.ativo { display:grid; }
+.btn-dir {
+  width:clamp(48px,6vw,70px); height:clamp(48px,6vw,70px);
+  border-radius:14px; border:none;
+  background:rgba(255,255,255,0.12);
+  color:#fff; font-size:clamp(1.2rem,2vw,1.8rem);
+  cursor:pointer; display:flex;
+  align-items:center; justify-content:center;
+  transition:all .15s;
+  backdrop-filter:blur(4px);
+  border:1px solid rgba(255,255,255,0.2);
+}
+.btn-dir:active { transform:scale(.9); background:rgba(255,255,255,0.25); }
+#btn-cima  { grid-area:cima;  }
+#btn-baixo { grid-area:baixo; }
+#btn-esq   { grid-area:esq;   }
+#btn-dir-r { grid-area:dir;   }
+
+/* ── COUNTDOWN ── */
+#countdown {
+  position:fixed; inset:0; z-index:40;
+  background:rgba(10,22,40,0.88);
+  backdrop-filter:blur(6px);
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:1vh;
+}
+#countdown.hidden { display:none; }
+.count-num {
+  font-size:clamp(7rem,22vw,15rem);
+  font-weight:900; color:#FFD700;
+  text-shadow:0 0 60px rgba(255,215,0,.6);
+  animation:popNum .4s cubic-bezier(.175,.885,.32,1.275);
+}
+@keyframes popNum {
+  from { transform:scale(.2); opacity:0; }
+  to   { transform:scale(1);  opacity:1; }
+}
+.count-label { font-size:1.3rem; color:rgba(255,255,255,.6); }
+
+/* ── FEEDBACK OVERLAY ── */
+#feedback-overlay {
+  position:fixed; inset:0; z-index:30;
+  pointer-events:none;
+  display:flex; align-items:center; justify-content:center;
+}
+.feedback-txt {
+  font-family:'Nunito',sans-serif;
+  font-size:clamp(5rem,15vw,11rem);
+  font-weight:900;
+  animation:feedAnim .7s ease forwards;
+  opacity:0;
+}
+@keyframes feedAnim {
+  0%   { transform:scale(.3); opacity:1; }
+  60%  { transform:scale(1.1); opacity:1; }
+  100% { transform:scale(1.4); opacity:0; }
+}
+
+/* Partículas */
+.part {
+  position:fixed; border-radius:50%;
+  pointer-events:none; z-index:29;
+  animation:partExplode .8s ease forwards;
+}
+@keyframes partExplode {
+  0%   { transform:translate(0,0) scale(1); opacity:1; }
+  100% { transform:translate(var(--dx),var(--dy)) scale(0); opacity:0; }
+}
+
+/* ── PAINEL JOGO PAUSADO / ACERTOU ── */
+#painel-resultado {
+  position:fixed; inset:0; z-index:35;
+  background:rgba(10,22,40,0.9);
+  backdrop-filter:blur(8px);
+  display:none; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:2vh;
+}
+#painel-resultado.show { display:flex; }
+.painel-emoji  { font-size:clamp(4rem,12vw,7rem); }
+.painel-titulo { font-size:clamp(2rem,5vw,3.5rem); font-weight:900; text-align:center; }
+.painel-sub    { font-size:clamp(1rem,2.2vw,1.4rem); color:rgba(255,255,255,.65); text-align:center; }
+.painel-placar {
+  display:flex; gap:3vw; align-items:center;
+}
+.placar-card {
+  background:rgba(255,255,255,.08);
+  border:1.5px solid rgba(255,255,255,.15);
+  border-radius:18px; padding:1.5vh 3vw;
+  text-align:center; min-width:120px;
+}
+.placar-num  { font-size:clamp(2.5rem,6vw,4rem); font-weight:900; line-height:1; }
+.placar-lbl  { font-size:.75rem; color:rgba(255,255,255,.5); text-transform:uppercase; }
+.btn-prox {
+  border:none; border-radius:999px;
+  padding:1.2vh 4vw;
+  font-family:'Nunito',sans-serif;
+  font-size:clamp(1.1rem,2.2vw,1.5rem);
+  font-weight:900; cursor:pointer;
+  background:linear-gradient(135deg,#FFD700,#FFA500);
+  color:#0A1628;
+  box-shadow:0 0 25px rgba(255,215,0,.4);
+  transition:all .2s;
+}
+.btn-prox:hover { transform:scale(1.07); }
+
+/* ── TELA FIM ── */
+#tela-fim {
+  position:fixed; inset:0; z-index:50;
+  background:radial-gradient(ellipse at top, #1A3A6C, #0A1628);
+  display:none; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:2vh;
+}
+#tela-fim.show { display:flex; }
+.fim-emoji  { font-size:clamp(4rem,12vw,7rem); animation:troFeu .8s cubic-bezier(.175,.885,.32,1.275); }
+@keyframes troFeu { from{transform:scale(0) rotate(-180deg);opacity:0} to{transform:scale(1) rotate(0);opacity:1} }
+.fim-titulo { font-size:clamp(2rem,5vw,3.5rem); font-weight:900; color:#FFD700; text-align:center; }
+.fim-placar { display:flex; gap:3vw; flex-wrap:wrap; justify-content:center; }
+.btn-jogar-dnv {
+  border:none; border-radius:999px;
+  padding:1.2vh 4vw;
+  font-family:'Nunito',sans-serif;
+  font-size:clamp(1.1rem,2.2vw,1.5rem);
+  font-weight:900; cursor:pointer;
+  background:#fff; color:#0A1628;
+  transition:all .2s;
+}
+.btn-jogar-dnv:hover { transform:scale(1.08); }
+</style>
+</head>
+<body>
+
+<div id="feedback-overlay"></div>
+
+<!-- ══ TELA INÍCIO ══ -->
+<div id="tela-inicio">
+  <div class="titulo-jogo">🐍 Cobra das Sílabas</div>
+  <div class="subtitulo-jogo">Controle a cobra para coletar as sílabas na ordem certa e formar a palavra!</div>
+
+  <div class="config-box">
+    <div class="config-titulo">📚 Nível das palavras</div>
+    <div class="nivel-grid">
+      <button class="btn-nivel" onclick="selecionarNivel('facil',this)">
+        🌱 Fácil<br><small style="font-weight:700;opacity:.7">2 sílabas</small>
+      </button>
+      <button class="btn-nivel" onclick="selecionarNivel('medio',this)">
+        🌿 Médio<br><small style="font-weight:700;opacity:.7">3 sílabas</small>
+      </button>
+      <button class="btn-nivel" onclick="selecionarNivel('desafio',this)">
+        🌳 Desafio<br><small style="font-weight:700;opacity:.7">4 sílabas</small>
+      </button>
+    </div>
+
+    <div class="config-titulo" style="margin-top:.5vh">⚡ Velocidade da cobra</div>
+    <div class="vel-row">
+      <span class="vel-label">🐢</span>
+      <div style="flex:1;display:flex;flex-direction:column;gap:3px;">
+        <div class="vel-track" id="vel-track">
+          <div class="vel-fill" id="vel-fill" style="width:20%"></div>
+          <div class="vel-handle" id="vel-handle" style="left:20%"></div>
+        </div>
+        <div class="vel-ticks">
+          <span>Devagar</span><span>Lento</span><span>Médio</span><span>Rápido</span><span>Turbo</span>
+        </div>
+      </div>
+      <span class="vel-label">🐇</span>
+    </div>
+    <div style="text-align:center;font-size:.85rem;color:rgba(255,255,255,.5);">
+      Velocidade atual: <strong id="vel-nome" style="color:#FFD700">Devagar</strong>
+      &nbsp;·&nbsp; Tempo por palavra: <strong id="vel-tempo" style="color:#4ADE80">30s</strong>
+    </div>
+    <div style="font-size:.8rem;color:rgba(255,255,255,.4);text-align:center;padding:6px 10px;background:rgba(255,255,255,.04);border-radius:10px;">
+      💡 Para lousa touch: use <strong style="color:#4ADE80">Devagar</strong> ou <strong style="color:#4ADE80">Lento</strong>
+    </div>
+  </div>
+
+  <button class="btn-comecar" id="btn-comecar" onclick="iniciarJogo()">
+    🚀 Começar!
+  </button>
+</div>
+
+<!-- ══ COUNTDOWN ══ -->
+<div id="countdown" class="hidden">
+  <div class="count-num" id="count-num">3</div>
+  <div class="count-label">Prepara a cobra!</div>
+</div>
+
+<!-- ══ HUD ══ -->
+<div id="hud">
+  <div class="hud-bloco">
+    <span class="hud-label">Pontos</span>
+    <span class="hud-val hud-ouro" id="hud-pontos">0</span>
+  </div>
+  <div class="hud-bloco">
+    <span class="hud-label">Palavra</span>
+    <span class="hud-val hud-azul" id="hud-palavra">1/8</span>
+  </div>
+
+  <div class="palavra-alvo-wrap">
+    <div class="emoji-alvo" id="hud-emoji">🐱</div>
+    <div class="palavra-slots" id="hud-slots"></div>
+  </div>
+
+  <div class="hud-bloco" style="align-items:flex-end;">
+    <span class="hud-label">Tempo</span>
+    <span class="hud-val hud-coral" id="hud-timer">30</span>
+    <div class="timer-bar-bg">
+      <div class="timer-bar-fill" id="timer-fill"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ARENA ══ -->
+<div id="arena">
+  <canvas id="canvas"></canvas>
+  <!-- Botões de direção para touch -->
+  <div id="controles" class="ativo">
+    <button class="btn-dir" id="btn-cima"  onclick="mudarDir(0,-1)">▲</button>
+    <button class="btn-dir" id="btn-baixo" onclick="mudarDir(0,1)">▼</button>
+    <button class="btn-dir" id="btn-esq"   onclick="mudarDir(-1,0)">◀</button>
+    <button class="btn-dir" id="btn-dir-r" onclick="mudarDir(1,0)">▶</button>
+  </div>
+</div>
+
+<!-- ══ PAINEL RESULTADO ══ -->
+<div id="painel-resultado">
+  <div class="painel-emoji" id="painel-emoji">⭐</div>
+  <div class="painel-titulo" id="painel-titulo">Muito bem!</div>
+  <div class="painel-sub"    id="painel-sub">Palavra formada!</div>
+  <div class="painel-placar">
+    <div class="placar-card">
+      <div class="placar-num hud-ouro" id="painel-pontos">0</div>
+      <div class="placar-lbl">Pontos</div>
+    </div>
+    <div class="placar-card">
+      <div class="placar-num hud-azul" id="painel-palavra">1/8</div>
+      <div class="placar-lbl">Palavra</div>
+    </div>
+  </div>
+  <button class="btn-prox" id="btn-prox" onclick="proximaPalavra()">Próxima palavra ➡</button>
+</div>
+
+<!-- ══ TELA FIM ══ -->
+<div id="tela-fim">
+  <div class="fim-emoji">🏆</div>
+  <div class="fim-titulo" id="fim-titulo">Parabéns!</div>
+  <div class="fim-placar">
+    <div class="placar-card">
+      <div class="placar-num hud-ouro" id="fim-pontos">0</div>
+      <div class="placar-lbl">Pontos</div>
+    </div>
+    <div class="placar-card">
+      <div class="placar-num hud-verde" id="fim-acertos">0</div>
+      <div class="placar-lbl">Acertos</div>
+    </div>
+    <div class="placar-card">
+      <div class="placar-num hud-coral" id="fim-erros">0</div>
+      <div class="placar-lbl">Erros</div>
+    </div>
+  </div>
+  <button class="btn-jogar-dnv" onclick="voltarInicio()">🔄 Jogar de novo</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIGURAÇÃO DE VELOCIDADE
+// ═══════════════════════════════════════════════════════════════
+const VELOCIDADES = [
+  { nome:'Devagar', ms:400,  tempo:30, pct:0   },
+  { nome:'Lento',   ms:300,  tempo:25, pct:25  },
+  { nome:'Médio',   ms:220,  tempo:20, pct:50  },
+  { nome:'Rápido',  ms:160,  tempo:15, pct:75  },
+  { nome:'Turbo',   ms:110,  tempo:10, pct:100 },
+];
+let velIdx = 0; // Devagar por padrão
+
+// Termômetro
+const velTrack  = document.getElementById('vel-track');
+const velFill   = document.getElementById('vel-fill');
+const velHandle = document.getElementById('vel-handle');
+const velNome   = document.getElementById('vel-nome');
+const velTempo  = document.getElementById('vel-tempo');
+
+function setVelocidade(pct) {
+  pct = Math.max(0,Math.min(100,pct));
+  let best=0, bd=Infinity;
+  VELOCIDADES.forEach((v,i)=>{ const d=Math.abs(v.pct-pct); if(d<bd){bd=d;best=i;} });
+  velIdx = best;
+  const sp = VELOCIDADES[best].pct;
+  velFill.style.width  = sp+'%';
+  velHandle.style.left = sp+'%';
+  velNome.textContent  = VELOCIDADES[best].nome;
+  velTempo.textContent = VELOCIDADES[best].tempo+'s';
+}
+
+function pctFrom(e,el) {
+  const r = el.getBoundingClientRect();
+  const cx = e.touches ? e.touches[0].clientX : e.clientX;
+  return ((cx - r.left)/r.width)*100;
+}
+let draggingVel = false;
+velHandle.addEventListener('mousedown',  ()=>draggingVel=true);
+velHandle.addEventListener('touchstart', ()=>draggingVel=true,{passive:true});
+document.addEventListener('mousemove',   e=>{ if(draggingVel) setVelocidade(pctFrom(e,velTrack)); });
+document.addEventListener('touchmove',   e=>{ if(draggingVel) setVelocidade(pctFrom(e,velTrack)); },{passive:true});
+document.addEventListener('mouseup',    ()=>draggingVel=false);
+document.addEventListener('touchend',   ()=>draggingVel=false);
+velTrack.addEventListener('click', e=>setVelocidade(pctFrom(e,velTrack)));
+setVelocidade(0);
+
+// ═══════════════════════════════════════════════════════════════
+// BANCO DE PALAVRAS
+// ═══════════════════════════════════════════════════════════════
+const BANCO = {
+  facil: [
+    {emoji:'🐱',palavra:'GATO',   sils:['GA','TO']},
+    {emoji:'⚽',palavra:'BOLA',   sils:['BO','LA']},
+    {emoji:'🏠',palavra:'CASA',   sils:['CA','SA']},
+    {emoji:'🦆',palavra:'PATO',   sils:['PA','TO']},
+    {emoji:'🐸',palavra:'SAPO',   sils:['SA','PO']},
+    {emoji:'🐭',palavra:'RATO',   sils:['RA','TO']},
+    {emoji:'🌙',palavra:'LUA',    sils:['LU','A']},
+    {emoji:'☀️',palavra:'SOL',    sils:['SO','L']},
+  ],
+  medio: [
+    {emoji:'🐴',palavra:'CAVALO',  sils:['CA','VA','LO']},
+    {emoji:'🐵',palavra:'MACACO',  sils:['MA','CA','CO']},
+    {emoji:'🪟',palavra:'JANELA',  sils:['JA','NE','LA']},
+    {emoji:'👦',palavra:'MENINO',  sils:['ME','NI','NO']},
+    {emoji:'👟',palavra:'SAPATO',  sils:['SA','PA','TO']},
+    {emoji:'🍅',palavra:'TOMATE',  sils:['TO','MA','TE']},
+    {emoji:'🧸',palavra:'BONECA',  sils:['BO','NE','CA']},
+    {emoji:'🍲',palavra:'PANELA',  sils:['PA','NE','LA']},
+  ],
+  desafio: [
+    {emoji:'🦋',palavra:'BORBOLETA', sils:['BOR','BO','LE','TA']},
+    {emoji:'📞',palavra:'TELEFONE',  sils:['TE','LE','FO','NE']},
+    {emoji:'🍍',palavra:'ABACAXI',   sils:['A','BA','CA','XI']},
+    {emoji:'🐢',palavra:'TARTARUGA', sils:['TAR','TA','RU','GA']},
+    {emoji:'🏫',palavra:'ESCOLA',    sils:['ES','CO','LA']},
+    {emoji:'🍫',palavra:'CHOCOLATE', sils:['CHO','CO','LA','TE']},
+    {emoji:'🧊',palavra:'GELADEIRA', sils:['GE','LA','DEI','RA']},
+    {emoji:'🦜',palavra:'PAPAGAIO',  sils:['PA','PA','GAI','O']},
+  ]
+};
+
+const DISTRATOS = ['BA','BE','BI','BU','DA','DE','DI','DO','FA','FE','FI','HA','JU','KA','LE','LI','NA','NE','NI','PE','QUE','RE','RI','RU','SE','SI','TA','TI','TU','VA','VE','VI','VO','ZA','ZE','MI','MU','GU','FO','PU'];
+
+// ═══════════════════════════════════════════════════════════════
+// ESTADO DO JOGO
+// ═══════════════════════════════════════════════════════════════
+let nivel = null;
+let palavras = [];
+let idxPalavra = 0;
+let pontos = 0;
+let acertos = 0;
+let erros = 0;
+
+let cobra = [];
+let dir = {x:1, y:0};
+let nextDir = {x:1, y:0};
+let silabas = [];     // posições no grid
+let coletadas = [];   // sílabas já coletadas
+let gameLoop = null;
+let timerLoop = null;
+let tempoRestante = 30;
+let gameAtivo = false;
+
+const CELL = 40; // tamanho da célula do grid
+let COLS = 30, ROWS = 20;
+
+// ═══════════════════════════════════════════════════════════════
+// SETUP UI
+// ═══════════════════════════════════════════════════════════════
+function selecionarNivel(n, btn) {
+  nivel = n;
+  document.querySelectorAll('.btn-nivel').forEach(b=>b.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  document.getElementById('btn-comecar').classList.add('ativo');
+}
+
+function embaralhar(arr) {
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INICIAR JOGO
+// ═══════════════════════════════════════════════════════════════
+function iniciarJogo() {
+  if (!nivel) return;
+  palavras = embaralhar([...BANCO[nivel]]).slice(0, 8);
+  idxPalavra = 0; pontos = 0; acertos = 0; erros = 0;
+
+  document.getElementById('tela-inicio').style.display = 'none';
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('arena').style.display = 'block';
+  document.getElementById('controles').classList.add('ativo');
+
+  setupCanvas();
+  contagem();
+}
+
+function setupCanvas() {
+  const canvas = document.getElementById('canvas');
+  const arena  = document.getElementById('arena');
+  canvas.width  = arena.clientWidth;
+  canvas.height = arena.clientHeight;
+  COLS = Math.floor(canvas.width  / CELL);
+  ROWS = Math.floor(canvas.height / CELL);
+}
+
+function contagem() {
+  const overlay = document.getElementById('countdown');
+  const numEl   = document.getElementById('count-num');
+  overlay.classList.remove('hidden');
+  let c = 3;
+  numEl.textContent = c;
+
+  const tick = setInterval(()=>{
+    c--;
+    if (c > 0) {
+      numEl.style.animation='none';
+      requestAnimationFrame(()=>{ numEl.style.animation=''; numEl.textContent=c; });
+    } else {
+      clearInterval(tick);
+      numEl.textContent='🚀';
+      setTimeout(()=>{
+        overlay.classList.add('hidden');
+        carregarPalavra();
+      }, 600);
+    }
+  }, 900);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CARREGAR PALAVRA
+// ═══════════════════════════════════════════════════════════════
+function carregarPalavra() {
+  if (idxPalavra >= palavras.length) { fimDeJogo(); return; }
+
+  const item = palavras[idxPalavra];
+  coletadas = [];
+  dir      = {x:1, y:0};
+  nextDir  = {x:1, y:0};
+
+  // Cobra começa no centro
+  const mx = Math.floor(COLS/2);
+  const my = Math.floor(ROWS/2);
+  cobra = [{x:mx, y:my},{x:mx-1, y:my},{x:mx-2, y:my}];
+
+  // Gera sílabas no grid
+  posicionarSilabas(item);
+
+  // Atualiza HUD
+  atualizarHUD();
+  atualizarSlots();
+
+  // Timer
+  tempoRestante = VELOCIDADES[velIdx].tempo;
+  clearInterval(timerLoop);
+  timerLoop = setInterval(tickTimer, 1000);
+
+  // Game loop
+  clearInterval(gameLoop);
+  gameAtivo = true;
+  gameLoop = setInterval(tick, VELOCIDADES[velIdx].ms);
+
+  desenhar();
+}
+
+function posicionarSilabas(item) {
+  silabas = [];
+  const todas = [...item.sils];
+  // Adiciona distratos
+  const pool = embaralhar([...DISTRATOS]);
+  let qtd = Math.max(4, item.sils.length + 4);
+  for (const d of pool) { if (todas.length >= qtd) break; todas.push(d); }
+  embaralhar(todas);
+
+  const ocupadas = new Set(cobra.map(c=>`${c.x},${c.y}`));
+  todas.forEach(sil => {
+    let x, y, key;
+    let tries = 0;
+    do {
+      x = Math.floor(Math.random()*(COLS-4))+2;
+      y = Math.floor(Math.random()*(ROWS-4))+2;
+      key = `${x},${y}`;
+      tries++;
+    } while (ocupadas.has(key) && tries < 200);
+    ocupadas.add(key);
+    silabas.push({ x, y, sil, correto: item.sils.includes(sil) });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GAME LOOP
+// ═══════════════════════════════════════════════════════════════
+function tick() {
+  if (!gameAtivo) return;
+  dir = {...nextDir};
+
+  const cabeca = cobra[0];
+  const nova = { x: cabeca.x + dir.x, y: cabeca.y + dir.y };
+
+  // Wrap (passa pelo lado oposto)
+  nova.x = (nova.x + COLS) % COLS;
+  nova.y = (nova.y + ROWS) % ROWS;
+
+  // Colisão com o próprio corpo (ignora os 3 últimos para facilitar)
+  const corpo = cobra.slice(0, cobra.length - 3);
+  if (corpo.some(s => s.x === nova.x && s.y === nova.y)) {
+    colidiu();
+    return;
+  }
+
+  cobra.unshift(nova);
+
+  // Verifica coleta de sílaba
+  const item = palavras[idxPalavra];
+  const idxSil = silabas.findIndex(s => s.x === nova.x && s.y === nova.y);
+
+  if (idxSil !== -1) {
+    const sil = silabas[idxSil];
+    const proxIdx = coletadas.length;
+    const silEsperada = item.sils[proxIdx];
+
+    if (sil.sil === silEsperada) {
+      // Sílaba correta!
+      coletadas.push(sil.sil);
+      silabas.splice(idxSil, 1);
+      atualizarSlots();
+      mostrarFeedback('✓', '#4ADE80');
+      pontos += 10;
+      atualizarHUD();
+
+      if (coletadas.length === item.sils.length) {
+        // Palavra completa!
+        clearInterval(gameLoop);
+        clearInterval(timerLoop);
+        gameAtivo = false;
+        pontos += tempoRestante * 2; // bônus de tempo
+        acertos++;
+        setTimeout(()=>mostrarPainel(true), 300);
+        return;
+      }
+    } else if (sil.correto && item.sils.includes(sil.sil)) {
+      // Sílaba da palavra mas fora de ordem
+      silabas.splice(idxSil, 1);
+      mostrarFeedback('~', '#FFD700');
+      // Reposiciona a sílaba errada
+      setTimeout(()=>{
+        const ocupadas = new Set(cobra.map(c=>`${c.x},${c.y}`));
+        let x,y,key,tries=0;
+        do { x=Math.floor(Math.random()*(COLS-4))+2; y=Math.floor(Math.random()*(ROWS-4))+2; key=`${x},${y}`; tries++; } while(ocupadas.has(key)&&tries<200);
+        silabas.push({x,y,sil:sil.sil,correto:true});
+        desenhar();
+      }, 200);
+      cobra.pop();
+    } else {
+      // Sílaba errada (distrato)
+      silabas.splice(idxSil, 1);
+      pontos = Math.max(0, pontos - 5);
+      mostrarFeedback('✗', '#FF6B9D');
+      atualizarHUD();
+      cobra.pop();
+    }
+  } else {
+    cobra.pop();
+  }
+
+  desenhar();
+}
+
+function tickTimer() {
+  tempoRestante--;
+  atualizarHUD();
+  if (tempoRestante <= 0) {
+    clearInterval(gameLoop);
+    clearInterval(timerLoop);
+    gameAtivo = false;
+    erros++;
+    mostrarPainel(false);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DESENHAR
+// ═══════════════════════════════════════════════════════════════
+function desenhar() {
+  const canvas = document.getElementById('canvas');
+  const ctx    = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Fundo grade
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let x=0; x<COLS; x++) {
+    ctx.beginPath(); ctx.moveTo(x*CELL,0); ctx.lineTo(x*CELL,canvas.height); ctx.stroke();
+  }
+  for (let y=0; y<ROWS; y++) {
+    ctx.beginPath(); ctx.moveTo(0,y*CELL); ctx.lineTo(canvas.width,y*CELL); ctx.stroke();
+  }
+
+  // Sílabas no grid
+  const item = palavras[idxPalavra];
+  silabas.forEach(s => {
+    const x = s.x * CELL, y = s.y * CELL;
+    const isNext = s.sil === item.sils[coletadas.length] && s.correto;
+
+    // Fundo
+    ctx.fillStyle = isNext
+      ? 'rgba(74,222,128,0.25)'
+      : s.correto
+        ? 'rgba(0,200,255,0.12)'
+        : 'rgba(255,255,255,0.06)';
+    roundRect(ctx, x+2, y+2, CELL-4, CELL-4, 8);
+    ctx.fill();
+
+    // Borda
+    ctx.strokeStyle = isNext ? '#4ADE80' : s.correto ? '#00C8FF' : 'rgba(255,255,255,0.18)';
+    ctx.lineWidth   = isNext ? 2.5 : 1.5;
+    roundRect(ctx, x+2, y+2, CELL-4, CELL-4, 8);
+    ctx.stroke();
+
+    // Seta piscante na próxima correta
+    if (isNext) {
+      ctx.fillStyle = '#4ADE80';
+      ctx.font = `bold ${Math.floor(CELL*0.22)}px Nunito`;
+      ctx.textAlign = 'center';
+      ctx.fillText('▼', x + CELL/2, y + 10);
+    }
+
+    // Texto sílaba
+    ctx.fillStyle = isNext ? '#4ADE80' : s.correto ? '#00C8FF' : 'rgba(255,255,255,0.65)';
+    ctx.font = `bold ${Math.floor(CELL*0.38)}px Nunito`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(s.sil, x + CELL/2, y + CELL/2 + 2);
+  });
+
+  // Cobra — corpo
+  cobra.forEach((seg, i) => {
+    const x = seg.x * CELL, y = seg.y * CELL;
+    const t = i / cobra.length;
+
+    if (i === 0) {
+      // Cabeça
+      const grad = ctx.createRadialGradient(x+CELL/2, y+CELL/2, 2, x+CELL/2, y+CELL/2, CELL*0.7);
+      grad.addColorStop(0, '#6EFF6E');
+      grad.addColorStop(1, '#27AE60');
+      ctx.fillStyle = grad;
+      roundRect(ctx, x+1, y+1, CELL-2, CELL-2, 10);
+      ctx.fill();
+      // Olhos
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(x+CELL*0.35, y+CELL*0.38, 4, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x+CELL*0.65, y+CELL*0.38, 4, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#0A1628';
+      ctx.beginPath(); ctx.arc(x+CELL*0.35+dir.x*2, y+CELL*0.38+dir.y*2, 2, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x+CELL*0.65+dir.x*2, y+CELL*0.38+dir.y*2, 2, 0, Math.PI*2); ctx.fill();
+      // Língua
+      ctx.strokeStyle = '#FF4D4D'; ctx.lineWidth = 2;
+      const lx = x + CELL/2 + dir.x*(CELL*0.5);
+      const ly = y + CELL/2 + dir.y*(CELL*0.5);
+      ctx.beginPath();
+      ctx.moveTo(x+CELL/2+dir.x*(CELL*0.4), y+CELL/2+dir.y*(CELL*0.4));
+      ctx.lineTo(lx, ly);
+      ctx.stroke();
+    } else {
+      const alpha = 1 - t * 0.5;
+      const g = Math.floor(180 - t*80);
+      ctx.fillStyle = `rgba(39,${g},96,${alpha})`;
+      roundRect(ctx, x+3, y+3, CELL-6, CELL-6, 7);
+      ctx.fill();
+    }
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DIREÇÃO (teclado + botões)
+// ═══════════════════════════════════════════════════════════════
+function mudarDir(dx, dy) {
+  // Não pode inverter
+  if (dx !== 0 && dir.x === -dx) return;
+  if (dy !== 0 && dir.y === -dy) return;
+  nextDir = {x:dx, y:dy};
+}
+
+document.addEventListener('keydown', e => {
+  if      (e.key === 'ArrowUp'   ) mudarDir(0,-1);
+  else if (e.key === 'ArrowDown' ) mudarDir(0,1);
+  else if (e.key === 'ArrowLeft' ) mudarDir(-1,0);
+  else if (e.key === 'ArrowRight') mudarDir(1,0);
+});
+
+// Swipe para touch
+let txStart=0, tyStart=0;
+document.getElementById('canvas').addEventListener('touchstart', e=>{
+  txStart = e.touches[0].clientX;
+  tyStart = e.touches[0].clientY;
+},{passive:true});
+document.getElementById('canvas').addEventListener('touchend', e=>{
+  const dx = e.changedTouches[0].clientX - txStart;
+  const dy = e.changedTouches[0].clientY - tyStart;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    if (dx > 30) mudarDir(1,0);
+    else if (dx < -30) mudarDir(-1,0);
+  } else {
+    if (dy > 30) mudarDir(0,1);
+    else if (dy < -30) mudarDir(0,-1);
+  }
+},{passive:true});
+
+// ═══════════════════════════════════════════════════════════════
+// HUD
+// ═══════════════════════════════════════════════════════════════
+function atualizarHUD() {
+  document.getElementById('hud-pontos').textContent = pontos;
+  document.getElementById('hud-palavra').textContent = (idxPalavra+1)+'/'+palavras.length;
+  document.getElementById('hud-emoji').textContent   = palavras[idxPalavra].emoji;
+  document.getElementById('hud-timer').textContent   = tempoRestante;
+
+  const pct = (tempoRestante / VELOCIDADES[velIdx].tempo) * 100;
+  const fill = document.getElementById('timer-fill');
+  fill.style.width = pct + '%';
+  if      (pct > 50) fill.style.background = 'linear-gradient(90deg,#4ADE80,#FFD700)';
+  else if (pct > 25) fill.style.background = 'linear-gradient(90deg,#FFD700,orange)';
+  else                fill.style.background = 'linear-gradient(90deg,orange,#FF6B9D)';
+}
+
+function atualizarSlots() {
+  const item  = palavras[idxPalavra];
+  const wrap  = document.getElementById('hud-slots');
+  wrap.innerHTML = '';
+  item.sils.forEach((sil, i) => {
+    const div = document.createElement('div');
+    div.className = 'slot-letra';
+    if (i < coletadas.length) {
+      div.textContent = coletadas[i];
+      div.classList.add(i === coletadas.length-1 ? 'correto' : 'preenchido');
+    } else {
+      div.textContent = '_';
+    }
+    wrap.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COLISÃO COM PRÓPRIO CORPO
+// ═══════════════════════════════════════════════════════════════
+function colidiu() {
+  clearInterval(gameLoop);
+  clearInterval(timerLoop);
+  gameAtivo = false;
+  pontos = Math.max(0, pontos - 15);
+  erros++;
+  mostrarFeedback('💥', '#FF6B9D');
+  atualizarHUD();
+  setTimeout(()=>mostrarPainel(false), 600);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FEEDBACK VISUAL
+// ═══════════════════════════════════════════════════════════════
+function mostrarFeedback(txt, cor) {
+  const el = document.createElement('div');
+  el.className = 'feedback-txt';
+  el.textContent = txt; el.style.color = cor;
+  document.getElementById('feedback-overlay').appendChild(el);
+  setTimeout(()=>el.remove(), 800);
+}
+
+function explodir(x, y, cor) {
+  for (let i=0; i<8; i++) {
+    const p = document.createElement('div');
+    p.className = 'part';
+    const ang = (Math.PI*2*i)/8;
+    const dist = 50 + Math.random()*50;
+    const sz = 6+Math.random()*6;
+    p.style.cssText = `left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;background:${cor};--dx:${Math.cos(ang)*dist}px;--dy:${Math.sin(ang)*dist}px;`;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(), 900);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PAINEL ENTRE PALAVRAS
+// ═══════════════════════════════════════════════════════════════
+function mostrarPainel(acertou) {
+  const painel = document.getElementById('painel-resultado');
+  document.getElementById('painel-emoji').textContent   = acertou ? '🌟' : '⏰';
+  document.getElementById('painel-titulo').textContent  = acertou ? 'Palavra formada!' : 'Tempo esgotado!';
+  document.getElementById('painel-sub').textContent     = acertou
+    ? `"${palavras[idxPalavra].palavra}" — muito bem!`
+    : `A palavra era "${palavras[idxPalavra].palavra}"`;
+  document.getElementById('painel-pontos').textContent  = pontos;
+  document.getElementById('painel-palavra').textContent = (idxPalavra+1)+'/'+palavras.length;
+
+  const isUltima = idxPalavra >= palavras.length - 1;
+  const btnProx  = document.getElementById('btn-prox');
+  btnProx.textContent = isUltima ? '🏆 Ver resultado!' : 'Próxima palavra ➡';
+
+  painel.classList.add('show');
+
+  if (acertou) {
+    for (let i=0;i<25;i++) setTimeout(()=>{
+      const p=document.createElement('div');p.className='part';
+      const cores=['#FFD700','#4ADE80','#00C8FF','#FF6B9D'];
+      const sz=8+Math.random()*10;
+      p.style.cssText=`left:${Math.random()*100}vw;top:${Math.random()*40}vh;width:${sz}px;height:${sz}px;background:${cores[Math.floor(Math.random()*cores.length)]};border-radius:${Math.random()>.5?'50%':'3px'};--dx:${(Math.random()-.5)*150}px;--dy:${80+Math.random()*150}px;animation-duration:${.8+Math.random()}s;`;
+      document.body.appendChild(p);setTimeout(()=>p.remove(),1500);
+    }, i*40);
+  }
+}
+
+function proximaPalavra() {
+  document.getElementById('painel-resultado').classList.remove('show');
+  idxPalavra++;
+  if (idxPalavra >= palavras.length) { fimDeJogo(); return; }
+  contagem();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FIM DE JOGO
+// ═══════════════════════════════════════════════════════════════
+function fimDeJogo() {
+  document.getElementById('hud').style.display   = 'none';
+  document.getElementById('arena').style.display = 'none';
+
+  const pct = acertos / palavras.length;
+  let emoji = '🏆', titulo = 'Incrível!';
+  if      (pct >= 0.8) { emoji='🏆'; titulo='Você arrasou!'; }
+  else if (pct >= 0.5) { emoji='😊'; titulo='Muito bem!'; }
+  else                 { emoji='💪'; titulo='Continue praticando!'; }
+
+  document.getElementById('fim-titulo').textContent = titulo;
+  document.getElementById('fim-pontos').textContent = pontos;
+  document.getElementById('fim-acertos').textContent = acertos;
+  document.getElementById('fim-erros').textContent   = erros;
+
+  const tela = document.getElementById('tela-fim');
+  tela.querySelector('.fim-emoji').textContent = emoji;
+  tela.classList.add('show');
+
+  for (let i=0;i<40;i++) setTimeout(()=>{
+    const p=document.createElement('div');p.className='part';
+    const cores=['#FFD700','#4ADE80','#00C8FF','#FF6B9D','#B24BF3'];
+    const sz=8+Math.random()*10;
+    p.style.cssText=`left:${Math.random()*100}vw;top:${Math.random()*30}vh;width:${sz}px;height:${sz}px;background:${cores[Math.floor(Math.random()*cores.length)]};border-radius:${Math.random()>.5?'50%':'3px'};--dx:${(Math.random()-.5)*200}px;--dy:${80+Math.random()*200}px;animation-duration:${1+Math.random()}s;`;
+    document.body.appendChild(p);setTimeout(()=>p.remove(),2000);
+  }, i*50);
+}
+
+function voltarInicio() {
+  clearInterval(gameLoop);
+  clearInterval(timerLoop);
+  document.getElementById('tela-fim').classList.remove('show');
+  document.getElementById('hud').style.display   = 'none';
+  document.getElementById('arena').style.display = 'none';
+  document.getElementById('tela-inicio').style.display = 'flex';
+  document.querySelectorAll('.btn-nivel').forEach(b=>b.classList.remove('ativo'));
+  document.getElementById('btn-comecar').classList.remove('ativo');
+  nivel = null;
+}
+
+// Redimensionar canvas quando a janela muda
+window.addEventListener('resize', ()=>{
+  if (document.getElementById('arena').style.display !== 'none') {
+    setupCanvas();
+    desenhar();
+  }
+});
+</script>
+</body>
+</html>
