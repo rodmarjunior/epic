@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instituto EPIC — Recursos Educacionais</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700;900&family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0D1B2E;
+    --bg2:      #0A1628;
+    --cyan:     #00E5FF;
+    --magenta:  #FF00A8;
+    --white:    #FFFFFF;
+    --gray:     #8BA3BF;
+    --border:   rgba(0,229,255,0.15);
+    --card-bg:  rgba(255,255,255,0.04);
+    --card-hov: rgba(0,229,255,0.08);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family:'Barlow',sans-serif;
+    background: var(--bg);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── GRID BG ── */
+  body::before {
+    content:'';
+    position:fixed; inset:0; z-index:0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events:none;
+  }
+
+  /* ── GLOW BG ── */
+  .glow-bg {
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(0,229,255,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 80% 80%, rgba(255,0,168,0.06) 0%, transparent 60%);
+  }
+
+  /* ── WRAPPER ── */
+  .wrapper { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:0 2rem 4rem; }
+
+  /* ── HEADER ── */
+  header {
+    padding: 3.5rem 0 2.5rem;
+    display:flex; flex-direction:column; align-items:center;
+    gap: .4rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 3rem;
+  }
+
+  /* LOGO SVG */
+  .logo-wrap { margin-bottom:.8rem; }
+
+  /* ── LOGO TEXTO REPLICADO ── */
+  .logo-instituto {
+    font-family:'Barlow Condensed',sans-serif;
+    font-size: clamp(.75rem, 1.5vw, .95rem);
+    font-weight: 700;
+    letter-spacing: .35em;
+    color: var(--white);
+    text-transform: uppercase;
+    line-height:1;
+    display:block;
+    text-align:center;
+  }
+  .logo-epic {
+    font-family:'Barlow Condensed',sans-serif;
+    font-size: clamp(3.5rem, 10vw, 6.5rem);
+    font-weight: 900;
+    color: var(--cyan);
+    line-height: .9;
+    text-transform: lowercase;
+    letter-spacing: -.02em;
+    display:block;
+    text-align:center;
+    text-shadow: 0 0 40px rgba(0,229,255,0.35);
+  }
+  .logo-epic .dot {
+    color: var(--magenta);
+    text-shadow: 0 0 30px rgba(255,0,168,0.6);
+  }
+
+  .header-tagline {
+    font-size: clamp(.85rem, 1.8vw, 1.05rem);
+    color: var(--gray);
+    text-align:center;
+    letter-spacing:.04em;
+    margin-top:.6rem;
+  }
+
+  /* ── BADGE COUNT ── */
+  .badge-count {
+    display:inline-flex; align-items:center; gap:.5rem;
+    background: rgba(0,229,255,0.08);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding:.4rem 1.2rem;
+    font-size:.8rem; font-weight:700;
+    color: var(--cyan); letter-spacing:.1em;
+    text-transform:uppercase;
+    margin-top: 1rem;
+  }
+  .badge-count span { color:var(--magenta); font-size:1rem; font-weight:900; }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:.7rem; font-weight:700;
+    letter-spacing:.3em; text-transform:uppercase;
+    color: var(--cyan); opacity:.6;
+    margin-bottom: 1.2rem;
+    display:flex; align-items:center; gap:.8rem;
+  }
+  .section-label::after {
+    content:''; flex:1; height:1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+  }
+
+  /* ── GRID ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1rem;
+  }
+
+  /* ── CARD ── */
+  .card {
+    display:flex; flex-direction:column;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--white);
+    transition: transform .2s, background .2s, border-color .2s, box-shadow .2s;
+    position: relative;
+  }
+  .card::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:2px;
+    background: linear-gradient(90deg, transparent, var(--accent, var(--cyan)), transparent);
+    opacity: 0; transition: opacity .2s;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    background: var(--card-hov);
+    border-color: rgba(0,229,255,0.35);
+    box-shadow: 0 12px 40px rgba(0,229,255,0.08);
+  }
+  .card:hover::before { opacity:1; }
+
+  .card-body {
+    padding: 1.3rem 1.4rem 1rem;
+    flex:1;
+  }
+
+  .card-top {
+    display:flex; align-items:flex-start; gap:1rem;
+    margin-bottom:.8rem;
+  }
+
+  .card-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: rgba(0,229,255,0.1);
+    border: 1px solid rgba(0,229,255,0.2);
+    display:flex; align-items:center; justify-content:center;
+    font-size: 1.4rem; flex-shrink:0;
+    transition: background .2s;
+  }
+  .card:hover .card-icon { background: rgba(0,229,255,0.18); }
+
+  .card-title {
+    font-family:'Barlow Condensed',sans-serif;
+    font-size: clamp(1.1rem,2.2vw,1.35rem);
+    font-weight: 700; line-height:1.1;
+    color: var(--white);
+    margin-bottom:.2rem;
+  }
+
+  .card-level {
+    font-size:.68rem; font-weight:700;
+    letter-spacing:.1em; text-transform:uppercase;
+    padding:.12rem .55rem; border-radius:999px;
+    display:inline-block;
+  }
+  .lv-f1  { background:rgba(74,222,128,.15); color:#4ADE80; }
+  .lv-f2  { background:rgba(139,92,246,.15); color:#A78BFA; }
+  .lv-eja { background:rgba(251,146,60,.15);  color:#FB923C; }
+  .lv-all { background:rgba(0,229,255,.12);   color:var(--cyan); }
+
+  .card-desc {
+    font-size:.88rem; color:var(--gray); line-height:1.55;
+  }
+
+  .card-footer {
+    padding:.9rem 1.4rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+
+  .card-file {
+    font-size:.72rem; color:rgba(255,255,255,.3);
+    font-weight:600; letter-spacing:.04em;
+    font-family:monospace;
+  }
+
+  .card-btn {
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:.8rem; font-weight:700;
+    letter-spacing:.08em; text-transform:uppercase;
+    color: var(--cyan);
+    display:flex; align-items:center; gap:.3rem;
+    opacity:.7; transition: opacity .15s;
+  }
+  .card:hover .card-btn { opacity:1; }
+
+  /* ── FOOTER ── */
+  footer {
+    margin-top: 4rem;
+    padding: 2rem 0;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: .8rem; color: var(--gray);
+    letter-spacing:.05em;
+  }
+  footer strong { color: var(--cyan); }
+
+  /* Animação entrada */
+  .card {
+    animation: cardIn .4s ease both;
+  }
+  @keyframes cardIn {
+    from { opacity:0; transform:translateY(16px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .card:nth-child(1)  { animation-delay:.05s }
+  .card:nth-child(2)  { animation-delay:.10s }
+  .card:nth-child(3)  { animation-delay:.15s }
+  .card:nth-child(4)  { animation-delay:.20s }
+  .card:nth-child(5)  { animation-delay:.25s }
+  .card:nth-child(6)  { animation-delay:.30s }
+  .card:nth-child(7)  { animation-delay:.35s }
+  .card:nth-child(8)  { animation-delay:.40s }
+  .card:nth-child(9)  { animation-delay:.45s }
+  .card:nth-child(10) { animation-delay:.50s }
+  .card:nth-child(11) { animation-delay:.55s }
+  .card:nth-child(12) { animation-delay:.60s }
+  .card:nth-child(13) { animation-delay:.65s }
+  .card:nth-child(14) { animation-delay:.70s }
+
+  @media(max-width:600px){
+    .wrapper { padding:0 1rem 3rem; }
+    .grid { grid-template-columns:1fr; }
+    header { padding:2rem 0 2rem; }
+  }
+</style>
+</head>
+<body>
+<div class="glow-bg"></div>
+
+<div class="wrapper">
+
+  <!-- HEADER + LOGO -->
+  <header>
+    <div class="logo-wrap">
+      <span class="logo-instituto">Institut<span style="color:var(--magenta)">o</span></span>
+      <span class="logo-epic">epi<span class="dot">c</span></span>
+    </div>
+    <p class="header-tagline">Recursos educacionais interativos para a lousa Huawei IdeaHub</p>
+    <div class="badge-count"><span>14</span> atividades gratuitas · F1 · F2 · EJA</div>
+  </header>
+
+  <!-- GRID DE ATIVIDADES -->
+  <div class="section-label">Atividades &amp; Jogos</div>
+
+  <div class="grid">
+
+    <a class="card" href="cobrinha.html">
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-icon">🐍</div>
+          <div>
+            <div class="card-title">Cobra das Sílabas</div>
+            <span class="card-level lv-f1">Fundamental 1</span>
+          </div>
+        </div>
+        <p class="card-desc">Controle a cobra para coletar sílabas na ordem certa e formar palavras. Jogo de alfabetização com controle por toque na lousa.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-file">cobrinha.html</span>
+        <span class="card-btn">Abrir →</span>
+      </div>
+    </a>
+
+    <a class="card" href="cores_misturadas.html">
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-icon">🎨</div>
+          <div>
+            <div class="card-title">Cores Misturadas</div>
+            <span class="card-level lv-f1">Fundamental 1</span>
+          </div>
+        </div>
+        <p class="card-desc">Duas bolas de tinta aparecem na tela — o aluno toca na cor que resulta da mistura. Quiz de cores para Artes e Ciências.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-file">cores_misturadas.html</span>
+        <span class="card-btn">Abrir →</span>
+      </div>
+    </a>
+
+    <a class="card" href="curadoria_sites.html">
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-icon">🗂️</div>
+          <div>
+            <div class="card-title">Curadoria de Sites</div>
+            <span class="card-level lv-all">F1 + F2</span>
+          </div>
+        </div>
+        <p class="card-desc">40+ sites educacionais gratuitos organizados por série e matéria. Toque no card para abrir direto na lousa. Filtro por disciplina.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-file">curadoria_sites.html</span>
+        <span class="card-btn">Abrir →</span>
+      </div>
+    </a>
+
+    <a class="card" href="forma_palavra.html">
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-icon">✏️</div>
+          <div>
+            <div class="card-title">Forma Palavras Battle</div>
+            <span class="card-level lv-f1">Fundamental 1</span>
+          </div>
+        </div>
+        <p class="card-desc">Jogo em dupla: dois alunos competem formando palavras a partir de sílabas. Tela dividida ao meio — cada time toca no seu lado.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-file">forma_palavra.html</span>
+        <span class="card-btn">Abrir →</span>
+      </div>
+    </a>
+
+    <a class="card" href="jogo_conjugacao.html">
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-icon">🔤</div>
+          <div>
+            <div class="card-title">Jogo de Conjugação</div>
+            <span class="card-level lv-f2">Fundamental 2</span>
+          </div>
+        </div>
+        <p class="card-desc">Quiz interativo de conjugação verbal. O aluno toca na forma correta do verbo. Cobre os principais tempos verbais do português.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-file">jogo_conjugacao.html</span>
+        <span class="card-btn">Abrir →</span>
+      </div>
+    </a>
+
+    <a class="card" href="jogo_graficos.html">
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-icon">📊</div>
+          <div>
+            <div class="card-title">Jogo de Gráficos</div>
+            <span class="card-level lv-f2">Fundamental 2</span>
+          </div>
+        </div>
+        <p class="card-desc">Atividade interativa de leitura e interpretação de gráficos. O aluno responde perguntas sobre dados apresentados visualmente na lousa.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-file">jogo_graficos.html</span>
+        <span class="card-btn">Abrir →</span>
+      </div>
+    </a>
+
+    <a class="card" href="linha_tempo.html">
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-icon">📅</div>
+          <div>
+            <div class="card-title">Linha do Tempo</div>
+            <span class="card-level lv-f2">Fundamental 2</span>
+          </div>
+        </div>
+        <p class="card-desc">Ordene eventos históricos arrastando os cards para a posição correta na linha do tempo. Cobre Descobrimento, Independência e República.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-file">linha_tempo.html</span>
+        <span class="card-btn">Abrir →</span>
+      </div>
+    </a>
+
+    <a class="card" href="mais_mas.html">
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-icon">📝</div>
+          <div>
+            <div class="card-title">Mais ou Mas?</div>
+            <span class="card-level lv-f1">Fundamental 1</span>
+          </div>
+        </div>
+        <p class="card-desc">Quiz de ortografia: o aluno escolhe entre "mais" e "mas" na frase correta. Atividade de português com feedback imediato e explicação.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-file">mais_mas.html</span>
+        <span class="card-btn">Abrir →</span>
+      </div>
+    </a>
+
+    <a class="card" href="piano.html">
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-icon">🎹</div>
+          <div>
+            <div class="card-title">Piano Musical</div>
+            <span class="card-level lv-all">F1 + F2</span>
+          </div>
+        </div>
+        <p class="card-desc">Piano interativo com 4 músicas guiadas — a tecla certa pisca em dourado. Toque Parabéns, Marcha Soldado, Borboletinha e Pirulito na lousa.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-file">piano.html</span>
+        <span class="card-btn">Abrir →</span>
+      </div>
+    </a>
+
+    <a class="card" href="quiz_4_ano.html">
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-icon">🧠</div>
+          <div>
+            <div class="card-title">Quiz 4º Ano</div>
+            <span class="card-level lv-f1">Fundamental 1</span>
+          </div>
+        </div>
+        <p class="card-desc">Quiz interativo com perguntas de múltipla escolha para o 4º ano. Cobre Português, Matemática, Ciências, História e Geografia.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-file">quiz_4_ano.html</span>
+        <span class="card-btn">Abrir →</span>
+      </div>
+    </a>
+
+    <a class="card" href="quiz_adulto.html">
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-icon">💪</div>
+          <div>
+            <div class="card-title">Quiz EJA</div>
+            <span class="card-level lv-eja">EJA</span>
+          </div>
+        </div>
+        <p class="card-desc">Quiz com conteúdo contextualizado para jovens e adultos: matemática financeira, leitura de textos do cotidiano e cidadania.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-file">quiz_adulto.html</span>
+        <span class="card-btn">Abrir →</span>
+      </div>
+    </a>
+
+    <a class="card" href="quiz_crianca.html">
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-icon">⭐</div>
+          <div>
+            <div class="card-title">Quiz Infantil</div>
+            <span class="card-level lv-f1">Fundamental 1</span>
+          </div>
+        </div>
+        <p class="card-desc">Quiz colorido e animado para crianças. Perguntas visuais com emojis, som e animações de acerto. Botões grandes para o touch na lousa.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-file">quiz_crianca.html</span>
+        <span class="card-btn">Abrir →</span>
+      </div>
+    </a>
+
+    <a class="card" href="tabuada.html">
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-icon">✖️</div>
+          <div>
+            <div class="card-title">Arena Matemática</div>
+            <span class="card-level lv-f1">Fundamental 1</span>
+          </div>
+        </div>
+        <p class="card-desc">Batalha de times: tela dividida entre Time Azul e Time Vermelho. Alunos correm até a lousa para tocar na resposta certa primeiro.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-file">tabuada.html</span>
+        <span class="card-btn">Abrir →</span>
+      </div>
+    </a>
+
+    <a class="card" href="tabuada_touch.html">
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-icon">🔢</div>
+          <div>
+            <div class="card-title">Tabuada Touch</div>
+            <span class="card-level lv-f1">Fundamental 1</span>
+          </div>
+        </div>
+        <p class="card-desc">Treino de tabuada com timer, partículas e placar. Um aluno por vez vai à lousa e toca na resposta certa entre 4 opções. Fundo estrelado.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-file">tabuada_touch.html</span>
+        <span class="card-btn">Abrir →</span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <strong>Instituto EPIC</strong> &nbsp;·&nbsp;
+    Todos os recursos são gratuitos &nbsp;·&nbsp;
+    Desenvolvidos para a <strong>Huawei IdeaHub Pro 65</strong>
+  </footer>
+
+</div>
+</body>
+</html>
